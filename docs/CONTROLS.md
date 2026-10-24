@@ -15,6 +15,10 @@
 
 An armed shot stays queued for 0.9 s (`ARM_DURATION`), then reverts to a drive.
 
+Keys are matched by physical position (`KeyboardEvent.code`), so WASD works
+with any keyboard layout, including Hebrew, where the W key produces a
+Hebrew letter in `event.key`.
+
 ## Touch
 
 | Input | Effect |

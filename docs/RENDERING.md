@@ -39,16 +39,27 @@ A procedural rig of `CapsuleGeometry` limbs on `Group` pivots: hips → torso
 chains and two hip → knee chains with shoes. The racket (grip, shaft, torus
 frame, string plane with a generated grid texture) hangs from the right hand.
 
-`PlayerModel.update(player, ball, dt)` poses the rig from simulation state only:
+`PlayerModel.update(player, ball, dt)` poses the rig from simulation state
+only (position, velocity, target, swing, run phase). The poses are modelled on
+squash movement as taught by coaches (split step, lunge, recovery to the T;
+see for example Squash Magazine's movement series and the ghosting literature
+linked in the README):
 
-- **Running**: hip swing ∝ `sin(runPhase)`, knee bend on the back swing,
-  counter-swinging left arm, body bob, forward lean and a turn into the run
-  direction (scaled so the player keeps facing the front wall).
-- **Swing**: `player.swing` decays 1 → 0 over 0.36 s. Three keyframes
-  (backswing → contact at 30 % → follow-through at 75 % → ready) drive the
-  shoulder yaw/lift and elbow bend; forehand and backhand are mirrored sets.
-  Lift adapts to the ball height so low balls are scooped and high balls
-  volleyed. Torso twists with the swing.
+| Situation | Pose |
+| --- | --- |
+| **Ready stance** (slow or still, ball in play) | Low: knees bent, feet wider than the hips, forward lean, racket up in front; a small **split-step** bounce at 7.5 Hz while waiting for the opponent's shot. |
+| **Side shuffle** (movement mostly along x) | Body stays square to the front wall; the lead leg steps out and the trailing leg closes; torso leans into the direction. No running stride. |
+| **Running forward** (toward the front wall) | Short quick strides, strong knee fold behind, forward lean, left arm pumping; the racket is prepared early (raised further as speed grows). |
+| **Backpedalling** (toward the back wall) | Shorter strides under the body, body opened toward the corner it is moving to. |
+| **Lunge** (last 0.9 m before the target while moving fast, or reaching for a ball during the stroke) | Hips drop ~22 cm, the leg on the lunge side extends toward the ball with a deep knee bend, the other leg trails straight, torso over the front knee, free arm out for balance. |
+| **Stroke** | Shoulders and hips turn toward the side wall on the ball side; high backswing → contact out in front at 30 % → follow-through across the body at 75 % → back to ready. Lift adapts to ball height (low balls are scooped). Forehand and backhand are mirrored sets. |
+
+Every parameter (run, lateral, forward, backward, lunge, facing) is smoothed
+with an exponential approach so poses blend instead of snapping. The head
+counter-rotates to stay level and turns toward the ball.
+
+Joint sign conventions are documented at the top of `player3d.js`; knees
+only ever bend backwards.
 
 ### Ball and effects (`renderer3d.js`)
 

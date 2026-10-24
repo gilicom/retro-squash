@@ -80,17 +80,19 @@ export class Input {
     s.addEventListener('pointerup', up);
     s.addEventListener('pointercancel', up);
 
+    // Physical key codes (e.code) are used so WASD works on any keyboard
+    // layout: with a Hebrew layout e.key for the W key is a Hebrew letter.
     window.addEventListener('keydown', (e) => {
       if (e.repeat) return;
-      const k = e.key.toLowerCase();
-      this.keys.add(k);
-      if (k === ' ' || k === 'enter') { this.actions.push('primary'); e.preventDefault(); }
-      else if (k === 'l' || k === 'shift') this.actions.push('lob');
-      else if (k === 'k' || k === 'control') this.actions.push('drop');
-      else if (k === 'p' || k === 'escape') this.actions.push('pause');
-      if (k.startsWith('arrow')) e.preventDefault();
+      const c = e.code;
+      this.keys.add(c);
+      if (c === 'Space' || c === 'Enter' || c === 'NumpadEnter') { this.actions.push('primary'); e.preventDefault(); }
+      else if (c === 'KeyL' || c === 'ShiftLeft' || c === 'ShiftRight') this.actions.push('lob');
+      else if (c === 'KeyK' || c === 'ControlLeft' || c === 'ControlRight') this.actions.push('drop');
+      else if (c === 'KeyP' || c === 'Escape') this.actions.push('pause');
+      if (c.startsWith('Arrow')) e.preventDefault();
     });
-    window.addEventListener('keyup', (e) => this.keys.delete(e.key.toLowerCase()));
+    window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => this.keys.clear());
   }
 
@@ -103,10 +105,10 @@ export class Input {
   keyboardAxis() {
     const k = this.keys;
     let x = 0, z = 0;
-    if (k.has('arrowleft') || k.has('a')) x -= 1;
-    if (k.has('arrowright') || k.has('d')) x += 1;
-    if (k.has('arrowup') || k.has('w')) z -= 1;
-    if (k.has('arrowdown') || k.has('s')) z += 1;
+    if (k.has('ArrowLeft') || k.has('KeyA')) x -= 1;
+    if (k.has('ArrowRight') || k.has('KeyD')) x += 1;
+    if (k.has('ArrowUp') || k.has('KeyW')) z -= 1;
+    if (k.has('ArrowDown') || k.has('KeyS')) z += 1;
     return { x, z };
   }
 

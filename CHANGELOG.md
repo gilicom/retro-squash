@@ -9,6 +9,16 @@ All notable changes to this project are documented here. The format follows
 ### Added
 - `npm run deploy` publishes the build to GitHub Pages; live at https://gilicom.github.io/retro-squash/.
 
+### Changed
+- Player animation rebuilt around real squash movement: low ready stance with a
+  split-step bounce, side shuffles, short running strides, backpedalling, a deep
+  lunge into the ball and a stroke with the shoulders turned to the side wall.
+  Knees now bend the right way.
+
+### Fixed
+- WASD and the other keys did nothing on non-Latin keyboard layouts (e.g.
+  Hebrew); keys are now matched by physical key code.
+
 ## [0.1.0] - 2026-10-24
 
 First playable version.
