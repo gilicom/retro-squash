@@ -42,14 +42,15 @@ frame, string plane with a generated grid texture) hangs from the right hand.
 `PlayerModel.update(player, ball, dt)` poses the rig from simulation state
 only (position, velocity, target, swing, run phase). The poses are modelled on
 squash movement as taught by coaches (split step, lunge, recovery to the T;
-see for example Squash Magazine's movement series and the ghosting literature
-linked in the README):
+see Control the T, *A blueprint for moving like the pros*, and Squash
+Magazine's movement series, both linked in the README):
 
 | Situation | Pose |
 | --- | --- |
-| **Ready stance** (slow or still, ball in play) | Low: knees bent, feet wider than the hips, forward lean, racket up in front; a small **split-step** bounce at 7.5 Hz while waiting for the opponent's shot. |
+| **Ready stance** (slow or still, ball in play) | Low: knees bent, feet wider than the hips, heels off the floor (weight on the toes), forward lean, racket up in front, a slow breathing sway. |
+| **Split step** (the instant the opponent's racket meets the ball) | One very small, very fast hop (4.5 cm, 0.26 s), landing with the feet a little wider and the knees taking the landing, so the first step can push off. Triggered from the opponent's swing state, never on a timer. |
 | **Side shuffle** (movement mostly along x) | Body stays square to the front wall; the lead leg steps out and the trailing leg closes; torso leans into the direction. No running stride. |
-| **Running forward** (toward the front wall) | Short quick strides, strong knee fold behind, forward lean, left arm pumping; the racket is prepared early (raised further as speed grows). |
+| **Running forward** (toward the front wall) | Short quick strides, strong knee fold behind, forward lean, left arm pumping; the racket is prepared early (raised further as speed grows). Vertical bob is kept small: good movement is quiet. |
 | **Backpedalling** (toward the back wall) | Shorter strides under the body, body opened toward the corner it is moving to. |
 | **Lunge** (last 0.9 m before the target while moving fast, or reaching for a ball during the stroke) | Hips drop ~22 cm, the leg on the lunge side extends toward the ball with a deep knee bend, the other leg trails straight, torso over the front knee, free arm out for balance. |
 | **Stroke** | Shoulders and hips turn toward the side wall on the ball side; high backswing → contact out in front at 30 % → follow-through across the body at 75 % → back to ready. Lift adapts to ball height (low balls are scooped). Forehand and backhand are mirrored sets. |

@@ -100,7 +100,7 @@ export class PlayerModel {
       foot.position.set(0, -0.5, -0.05);
       foot.castShadow = true;
       knee.add(foot);
-      this.legs.push({ hip, knee, side });
+      this.legs.push({ hip, knee, foot, side });
     }
 
     // Arms.
@@ -152,6 +152,8 @@ export class PlayerModel {
     this.lunge = 0;      // 0..1 depth of the lunge into the ball
     this.lungeX = 0;     // direction of the lunge (court x component)
     this.lungeZ = -1;    // direction of the lunge (court z component)
+    this.split = 0;      // 1 -> 0 progress of a split step (a single small hop timed to the opponent's contact)
+    this.prevOppSwing = 0;
     this.time = 0;
   }
 
@@ -160,11 +162,23 @@ export class PlayerModel {
    * @param {import('../entities/player.js').Player} p
    * @param {{x:number,y:number,z:number,inPlay?:boolean}} ball
    * @param {number} dt
+   * @param {import('../entities/player.js').Player} [opponent] used to time the split step
    */
-  update(p, ball, dt) {
+  update(p, ball, dt, opponent) {
     const r = this.root;
     r.position.set(p.x, 0, p.z);
     this.time += dt;
+
+    // Split step: one very small, very fast hop the instant the opponent strikes,
+    // landing with the feet a little wider so the first step can push off.
+    if (opponent) {
+      if (opponent.swing > 0.95 && this.prevOppSwing <= 0.95 && ball.inPlay && p.swing <= 0) this.split = 1;
+      this.prevOppSwing = opponent.swing;
+    }
+    if (this.split > 0) this.split = Math.max(0, this.split - dt / 0.26);
+    const splitU = this.split > 0 ? 1 - this.split : -1;            // 0 -> 1 during the hop
+    const hop = splitU >= 0 ? Math.sin(Math.PI * Math.min(1, splitU / 0.7)) * 0.045 : 0;
+    const landed = splitU >= 0 ? smooth(clamp((splitU - 0.4) / 0.6, 0, 1)) : 0;
 
     // ------------------------------------------------ movement analysis
     const speed = Math.hypot(p.vx, p.vz);
@@ -209,10 +223,11 @@ export class PlayerModel {
     r.rotation.y = this.facing;
 
     const waiting = ball.inPlay && swingT < 0 && run < 0.15;
-    const splitStep = waiting ? Math.max(0, Math.sin(this.time * 7.5)) * 0.03 : 0;
+    const breathe = waiting ? Math.sin(this.time * 2.2) * 0.006 : 0;
     const stanceDrop = 0.07;                              // knees bent in the ready stance
-    const bob = Math.abs(Math.sin(ph)) * (0.03 * fwd + 0.02 * Math.abs(lat));
-    this.hips.position.y = 0.95 - stanceDrop - run * 0.05 - lunge * 0.22 + bob + splitStep;
+    // Quiet, light steps: little vertical movement while moving.
+    const bob = Math.abs(Math.sin(ph)) * (0.018 * fwd + 0.012 * Math.abs(lat));
+    this.hips.position.y = 0.95 - stanceDrop - run * 0.05 - lunge * 0.22 + bob + breathe + hop - landed * 0.03;
 
     // Torso: forward lean when running, over the front knee in a lunge, lean into shuffles.
     this.torso.rotation.x = 0.14 + fwd * 0.22 + bwd * 0.05 + lunge * 0.45;
@@ -224,13 +239,18 @@ export class PlayerModel {
 
     // ------------------------------------------------ legs
     for (let i = 0; i < 2; i++) {
-      const { hip, knee, side: ls } = this.legs[i];
+      const { hip, knee, foot, side: ls } = this.legs[i];
       const phase = ph + (i === 0 ? 0 : Math.PI);
       const sw = Math.sin(phase);
       const lift = Math.max(0, -sw); // leg is behind -> knee folds
 
-      // Ready stance: feet wide, knees soft.
+      // Ready stance: feet wide, knees soft, weight on the toes.
       let flex = 0.28, bend = -0.55, abd = ls * 0.14;
+      // Split step: feet come down a little wider and the knees take the landing.
+      abd += ls * 0.1 * landed;
+      bend += -0.2 * landed;
+      // Heels off the floor in the stance and in the hop; flat when lunging.
+      foot.rotation.x = -(0.22 + 0.35 * (hop > 0 ? 1 : 0)) * (1 - lunge);
 
       // Running toward the front: short quick strides, strong knee fold behind.
       flex += sw * 0.6 * fwd;

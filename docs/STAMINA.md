@@ -33,14 +33,23 @@ difficulty.
 
 ## The T
 
-`T_POSITION` is 0.35 m behind the point where the short line meets the
-half-court line. The renderers draw a yellow ring there during play; it
+`T_POSITION` is a small step (0.55 m) behind the point where the short line
+meets the half-court line, where coaches tell players to stand. The renderers draw a yellow ring there during play; it
 brightens and pulses while the human is more than 0.9 m away, as a reminder.
+
+## Recovery speed
+
+Players do not sprint back to the T. `recoverySpeed()` in `entities/player.js`
+returns a jog (`RECOVERY_SPEED = 3.2 m/s`) when there is time, rising toward
+top speed when the T is far and the ball is about to reach the opponent (time
+available ≈ ball-to-opponent distance / ball speed). Both the AI (between its
+turns) and the return-to-T assist use it, so a relaxed rally costs little
+stamina and a fast one costs a lot, as in real play.
 
 ## Return-to-T assist (`Settings.autoT`, default on)
 
 After the human serves or strikes, `Match.returnToT` is set. While it is set
-and no new input arrives, the player's target is the T. Any mouse movement,
+and no new input arrives, the player's target is the T at recovery speed. Any mouse movement,
 touch drag or key press clears it (`Game._controlHuman`), so the assist never
 fights the player: it only fills the gap between shots. The HUD stamina bars
 let you see the pay-off.

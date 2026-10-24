@@ -8,6 +8,8 @@
 import { Ball } from '../physics/ball.js';
 import { SHOTS } from '../physics/shots.js';
 import { COURT } from '../config/court.js';
+import { RECOVERY_SPEED } from '../config/difficulty.js';
+import { T_POSITION, recoverySpeed } from './player.js';
 
 /** Gaussian random number (Box-Muller). */
 export function gauss(rand = Math.random) {
@@ -17,8 +19,6 @@ export function gauss(rand = Math.random) {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
-/** Centre of the court ("the T"), where a player waits between shots. */
-const T_POSITION = { x: COURT.W / 2, z: COURT.SHORT_LINE_Z + 0.9 };
 
 export class AIController {
   /**
@@ -55,11 +55,13 @@ export class AIController {
     const myTurn = ball.inPlay && ref.turn === this.p.index;
     if (!myTurn) {
       this.prediction = null;
-      // Wait on the T, stepping aside from the opponent.
+      // Jog back to the T (a relaxed recovery saves stamina), stepping aside from the opponent.
       const side = opponent.x > COURT.W / 2 ? -0.55 : 0.55;
       this.p.setTarget(T_POSITION.x + side, T_POSITION.z);
+      this.p.speedCap = recoverySpeed(this.p, ball, opponent, RECOVERY_SPEED);
       return;
     }
+    this.p.speedCap = Infinity;
     if (this.timer <= 0) {
       this.timer = this.d.reaction;
       const pred = this.predict(ball, ref);

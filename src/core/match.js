@@ -22,11 +22,11 @@
 import { Ball } from '../physics/ball.js';
 import { SHOTS, strikeVelocity, contactPressure } from '../physics/shots.js';
 import { Referee } from '../rules/referee.js';
-import { Player, T_POSITION } from '../entities/player.js';
+import { Player, T_POSITION, recoverySpeed } from '../entities/player.js';
 import { AIController } from '../entities/ai.js';
 import { COURT, serviceBoxCentre } from '../config/court.js';
 import { PHYSICS } from '../config/physics.js';
-import { DIFFICULTY, HUMAN } from '../config/difficulty.js';
+import { DIFFICULTY, HUMAN, RECOVERY_SPEED } from '../config/difficulty.js';
 
 /** How long a queued shot type (smash/lob/drop) stays armed (s). */
 export const ARM_DURATION = 0.9;
@@ -190,7 +190,13 @@ export class Match {
       return;
     }
 
-    if (this.returnToT && !this.human.frozen) this.human.setTarget(T_POSITION.x, T_POSITION.z);
+    // Recovery to the T is a jog, not a sprint; any player input lifts the cap.
+    if (this.returnToT && !this.human.frozen) {
+      this.human.setTarget(T_POSITION.x, T_POSITION.z);
+      this.human.speedCap = recoverySpeed(this.human, this.ball, this.cpu, RECOVERY_SPEED);
+    } else {
+      this.human.speedCap = Infinity;
+    }
     this.ai.update(dt, this.ball, this.referee, this.human);
     for (const p of this.players) p.update(dt, { resting: s !== 'rally' });
     this._separatePlayers();

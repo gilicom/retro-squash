@@ -10,10 +10,12 @@ All notable changes to this project are documented here. The format follows
 - `npm run deploy` publishes the build to GitHub Pages; live at https://gilicom.github.io/retro-squash/.
 
 ### Changed
-- Player animation rebuilt around real squash movement: low ready stance with a
-  split-step bounce, side shuffles, short running strides, backpedalling, a deep
-  lunge into the ball and a stroke with the shoulders turned to the side wall.
-  Knees now bend the right way.
+- Player animation rebuilt around real squash movement: low ready stance on the
+  toes, a single split step timed to the opponent's contact, side shuffles,
+  short quiet running strides, backpedalling, a deep lunge into the ball and a
+  stroke with the shoulders turned to the side wall. Knees now bend the right way.
+- Players jog back to the T instead of sprinting, and sprint only when the ball
+  is about to reach the opponent; the T is a small step behind the short line.
 
 ### Fixed
 - WASD and the other keys did nothing on non-Latin keyboard layouts (e.g.

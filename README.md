@@ -105,7 +105,10 @@ JSDoc with units (metres, seconds, m/s).
 ## Credits
 
 Inspired by *Squash* by ITISA Electronics (Palamós, 1984). Court dimensions and
-rules follow the World Squash *Rules of Singles Squash* (2025 edition). Licensed
+rules follow the World Squash *Rules of Singles Squash* (2025 edition). Player
+movement and animation follow coaching material: Control the T, [A blueprint
+for moving like the pros](https://blog.controlthet.com/blog/a-blueprint-for-moving-like-the-pros),
+and Squash Magazine, [Technique: it starts with the feet](https://squashmagazine.com/2012/03/technique-it-starts-with-the-feet-part-3/). Licensed
 under the MIT licence; see [LICENSE](LICENSE).
 
 ## תקציר בעברית

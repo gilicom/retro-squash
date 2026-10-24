@@ -163,7 +163,7 @@ export class Renderer3D {
   draw(scene) {
     const { ball, players, effects, dt } = scene;
 
-    for (let i = 0; i < players.length; i++) this.models[i].update(players[i], ball, dt);
+    for (let i = 0; i < players.length; i++) this.models[i].update(players[i], ball, dt, players[1 - i]);
 
     // Ball, blob and trail.
     this.ball.position.set(ball.x, Math.max(ball.y, BALL_R), ball.z);

@@ -43,6 +43,13 @@ export const STAMINA = Object.freeze({
   minSpeedFactor: 0.5,
 });
 
+/**
+ * Speed used to recover to the T between shots (m/s). Players jog back
+ * rather than sprint, which keeps the movement relaxed and saves stamina;
+ * they sprint only for the ball.
+ */
+export const RECOVERY_SPEED = 3.2;
+
 /** Game pace presets: multiplier applied to simulation time. */
 export const PACE = Object.freeze({
   relaxed: 0.8,

@@ -8,9 +8,10 @@ is in the parameters below.
 
 Every frame (`AIController.update`):
 
-1. **Not my turn** → run to the T, stepping half a metre to the side away from
-   the opponent so the human has a clear path. The T is where stamina recovers
-   fastest, so the AI naturally paces itself.
+1. **Not my turn** → recover to the T at a jog (faster only when the ball is
+   about to reach the human and the T is far; see STAMINA.md), stepping half a
+   metre to the side away from the opponent so the human has a clear path. The
+   T is where stamina recovers fastest, so the AI naturally paces itself.
 2. **My turn** → every `reaction` seconds re-read the ball by **simulating a
    private copy of it forward** (`predict`) with the real ball physics,
    including wall bounces. The first moment the ball is playable becomes the
@@ -59,9 +60,9 @@ the human. With the current constants (3 matches each):
 
 | Opponent | human win ratio | avg hits / rally | longest rally |
 | --- | --- | --- | --- |
-| easy | ≈ 0.82 | ≈ 5 | ≈ 20 s |
-| normal | ≈ 0.72 | ≈ 11 | ≈ 55 s |
-| hard | ≈ 0.34 | ≈ 22 | ≈ 2 min |
+| easy | ≈ 0.87 | ≈ 5 | ≈ 30 s |
+| normal | ≈ 0.77 | ≈ 11 | ≈ 30 s |
+| hard | ≈ 0.37 | ≈ 19 | ≈ 80 s |
 
 A real human positions far worse than the bot, so expect lower ratios in play.
 Rallies end by tin, not-up, out and service faults in varying proportions; if a
