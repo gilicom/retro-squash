@@ -10,7 +10,8 @@
     "build": "vite build",
     "preview": "vite preview --host",
     "test": "node --test \"tests/**/*.test.js\"",
-    "simulate": "node tools/simulate.js"
+    "simulate": "node tools/simulate.js",
+    "deploy": "node tools/deploy-pages.js"
   },
   "devDependencies": {
     "vite": "^6.0.0"

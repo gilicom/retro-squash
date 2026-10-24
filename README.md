@@ -16,6 +16,7 @@ opponent that reads the ball, and controls for both desktop and touch screens.
 - **Stamina and the T**: running drains a bar; standing on the T refills it.
   "Return to T" jogs you back after every shot until you move.
 - **No build step required to run**; Vite is used for the dev server and bundling.
+- **Play it now**: https://gilicom.github.io/retro-squash/ (works on phones; add to home screen for full screen).
 
 [Hebrew summary / תקציר בעברית](#תקציר-בעברית) is at the end of this file.
 
@@ -36,6 +37,7 @@ the same network, use the `--host` address Vite prints.
 | `npm run preview`  | Serve the production bundle locally                       |
 | `npm test`         | Unit + headless match tests (Node's built-in test runner) |
 | `npm run simulate` | Print shot and serve landing tables                       |
+| `npm run deploy`   | Build and publish to GitHub Pages (`gh-pages` branch)     |
 | `node tools/play-match.js [easy|normal|hard] [matches]` | Bot-vs-AI balance statistics |
 
 Requires Node 18+. Only two dependencies: `three` (runtime) and `vite` (dev).

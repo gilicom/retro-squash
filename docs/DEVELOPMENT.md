@@ -79,9 +79,19 @@ Add a key to `STRINGS` in `src/ui/i18n.js` with every string from `en`, add
 
 ## Deployment
 
-`npm run build` then upload `dist/`. It is a static site: no server code, no
-environment variables. The web manifest and theme colour let it be added to a
-phone's home screen as a full-screen app.
+The game is a static site: no server code, no environment variables. The web
+manifest and theme colour let it be added to a phone's home screen as a
+full-screen app.
+
+- **GitHub Pages (current)**: `npm run deploy` builds and force-pushes `dist/`
+  to the `gh-pages` branch, which Pages serves at
+  https://gilicom.github.io/retro-squash/. Needs only push rights.
+- **Automatic on push**: `.github/workflows/deploy.yml` (kept untracked until
+  the `gh` token has the `workflow` scope: `gh auth refresh -s workflow`)
+  runs tests, builds and deploys through GitHub Actions; switch Pages to the
+  "GitHub Actions" source when committing it.
+- **Anywhere else**: `npm run build` and upload `dist/` (relative asset paths,
+  works from any sub-folder).
 
 ## Versioning
 
