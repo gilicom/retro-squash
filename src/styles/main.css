@@ -1,0 +1,401 @@
+/* Retro Squash - global styles. Dark theme, HUD and overlays over a full-screen canvas. */
+
+:root {
+  --bg: #0b0f16;
+  --panel: rgba(16, 22, 32, 0.92);
+  --text: #f3f4f6;
+  --muted: #9aa3b2;
+  --accent: #f5e16a;
+  --you: #2f7df6;
+  --cpu: #e5483c;
+  --line: #d8232a;
+  --radius: 14px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+}
+
+#stage {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+#stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hidden { display: none !important; }
+
+/* ---------------------------------------------------------------- HUD */
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scoreboard {
+  position: absolute;
+  top: calc(var(--safe-top) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.stamina {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  padding: 3px 10px;
+  background: var(--panel);
+  border-radius: 999px;
+}
+
+.stamina .label {
+  min-width: 52px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stamina .bar {
+  width: 92px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.stamina .bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 3px;
+  transition: width 0.15s linear, background 0.3s;
+}
+
+.stamina .bar.you i { background: var(--you); }
+.stamina .bar.cpu i { background: var(--cpu); }
+.stamina .bar i.low { background: var(--accent); }
+.stamina .bar.you { direction: rtl; }
+[dir="rtl"] .stamina .bar.you { direction: ltr; }
+[dir="rtl"] .stamina .bar.cpu { direction: rtl; }
+
+.score {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 18px;
+  background: var(--panel);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.score .side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score .name {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.score .pts {
+  font-size: 28px;
+  font-weight: 700;
+  min-width: 1.4em;
+  text-align: center;
+}
+
+.score .you .pts { color: var(--you); }
+.score .cpu .pts { color: var(--cpu); }
+
+.score .games {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.score .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.score .dot.on {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+#btnPause {
+  position: absolute;
+  top: calc(var(--safe-top) + 10px);
+  right: calc(var(--safe-right) + 12px);
+  pointer-events: auto;
+}
+
+[dir="rtl"] #btnPause {
+  right: auto;
+  left: calc(var(--safe-left) + 12px);
+}
+
+#msg {
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 22px;
+  background: var(--panel);
+  border-radius: 999px;
+  font-size: clamp(15px, 2.4vw, 22px);
+  font-weight: 600;
+  text-align: center;
+  max-width: 90vw;
+  animation: pop 0.25s ease-out;
+}
+
+@keyframes pop {
+  from { transform: translateX(-50%) scale(0.85); opacity: 0; }
+  to { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+#touchButtons {
+  position: absolute;
+  bottom: calc(var(--safe-bottom) + 18px);
+  right: calc(var(--safe-right) + 16px);
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+[dir="rtl"] #touchButtons {
+  right: auto;
+  left: calc(var(--safe-left) + 16px);
+}
+
+body.touch #touchButtons { display: flex; }
+
+#touchButtons button {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: rgba(16, 22, 32, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  color: var(--text);
+}
+
+#touchButtons button:active {
+  background: var(--accent);
+  color: #111;
+}
+
+/* ------------------------------------------------------------ buttons */
+button {
+  font: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+
+button:hover { background: rgba(255, 255, 255, 0.14); }
+button:active { transform: scale(0.97); }
+
+button.primary {
+  background: var(--accent);
+  color: #111;
+  border-color: transparent;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 12px 36px;
+}
+
+button.primary:hover { background: #fff0a0; }
+
+button.icon {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 14px;
+  background: var(--panel);
+}
+
+/* ----------------------------------------------------------- overlays */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 8, 14, 0.55);
+  backdrop-filter: blur(3px);
+  padding: calc(var(--safe-top) + 12px) 12px calc(var(--safe-bottom) + 12px);
+  overflow: auto;
+}
+
+.panel {
+  width: min(520px, 100%);
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.panel.small { width: min(360px, 100%); }
+
+.panel h1 {
+  margin: 0;
+  font-size: clamp(40px, 9vw, 64px);
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-shadow: 0 0 24px rgba(245, 225, 106, 0.35);
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: start;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.row label {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.seg {
+  display: flex;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.seg button {
+  flex: 1;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.seg button.active {
+  background: rgba(255, 255, 255, 0.16);
+  font-weight: 600;
+}
+
+.help {
+  text-align: start;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.help summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.help p { margin: 8px 0 0; }
+
+.credits {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Narrow phones: a compact scoreboard that leaves room for the pause button. */
+@media (max-width: 520px) {
+  .scoreboard {
+    left: calc(var(--safe-left) + 10px);
+    transform: none;
+    align-items: flex-start;
+  }
+  [dir="rtl"] .scoreboard {
+    left: auto;
+    right: calc(var(--safe-right) + 10px);
+    align-items: flex-end;
+  }
+  .score { gap: 8px; padding: 6px 12px; }
+  .score .pts { font-size: 22px; }
+  .score .name { font-size: 11px; }
+  .score .games { font-size: 10px; }
+  .stamina .bar { width: 64px; }
+}
+
+@media (max-height: 560px) {
+  .panel { padding: 16px; gap: 10px; }
+  .panel h1 { font-size: 34px; }
+  .help { display: none; }
+}

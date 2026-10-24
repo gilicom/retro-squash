@@ -1,0 +1,88 @@
+# Development
+
+## Requirements
+
+- Node 18 or newer (uses `node:test`, ES modules, `structuredClone`-free code).
+- A browser with WebGL for the 3D renderer; any browser for the classic one.
+
+## Scripts
+
+| Command | Purpose |
+| --- | --- |
+| `npm install` | Installs `three` and `vite`. |
+| `npm run dev` | Vite dev server on port 5173 with `--host` (reachable from phones on the LAN). |
+| `npm run build` | Production bundle in `dist/` with `base: './'` so it works from any sub-path (GitHub Pages, S3, itch.io). Source maps included. |
+| `npm run preview` | Serves `dist/`. |
+| `npm test` | Runs `tests/**/*.test.js` with Node's test runner. No test framework to install. |
+| `npm run simulate` | Shot/serve landing tables (`tools/simulate.js`). |
+| `node tools/play-match.js [difficulty] [n]` | Headless bot-vs-AI matches with statistics. |
+
+## Tests
+
+| File | Covers |
+| --- | --- |
+| `tests/ball.test.js` | Bounce decay, containment, collision event data, drag. |
+| `tests/shots.test.js` | `aimAt` accuracy under drag, every shot legal from the back, x clamping. |
+| `tests/referee.test.js` | Every fault type, serve rules, box alternation, server change, 11/2-point margin, match structure. |
+| `tests/match.test.js` | Full seeded games: completion, rally length, variety of endings, both sides scoring, difficulty ordering, stamina use, serve set-up after a point. |
+
+Tests are deterministic (seeded `mulberry32` PRNG injected into `Match` and
+`AIController`). When a balance change breaks `match.test.js`, run
+`tools/play-match.js` to see what moved.
+
+## Balancing workflow
+
+1. Change a constant (`config/physics.js`, `config/difficulty.js`,
+   `physics/shots.js`).
+2. `npm run simulate` — make sure every shot still lands legally and serves
+   reach the receiving quarter.
+3. `node tools/play-match.js` — check win ratios (easy > normal > hard), rally
+   length, and that rallies end for several reasons.
+4. `npm test`.
+5. Play it: `npm run dev`, try all three difficulties and both paces.
+
+## Debugging in the browser
+
+`window.squash` is the `Game` instance. Useful:
+
+```js
+squash.match.state            // 'serve' | 'rally' | 'point' | ...
+squash.match.referee.history  // every rally so far
+squash.match.human.stamina
+squash.rendererKind           // '3d' | 'classic'
+squash.match.serve('lobServe')
+```
+
+The browser pauses the game when the tab is hidden (`visibilitychange`); to
+drive it from DevTools while hidden, stub `squash.pause = () => {}` and step
+with `squash.update(1/60, 1/60)` followed by
+`squash.renderer.draw({...})`.
+
+## Conventions
+
+- ES modules, no transpilation, no framework. Plain classes and functions.
+- Every module starts with a `@module` JSDoc block explaining its role; public
+  functions document parameters with units.
+- SI units everywhere (m, s, m/s). Angles in radians.
+- Pure core must not import from `render*`, `ui`, `input`, `audio` or touch
+  `window`/`document`. The test suite enforces this indirectly by running it in
+  Node.
+- Formatting: 2 spaces, single quotes, semicolons, trailing commas
+  (`.editorconfig`). Line length ~120.
+- Strings for the UI go in `ui/i18n.js` in both languages.
+
+## Adding a language
+
+Add a key to `STRINGS` in `src/ui/i18n.js` with every string from `en`, add
+`'xx'` to `LANGS`, and a button in the language segment in `index.html`. Set
+`dir` handling in `UI.applyLanguage` if the language is right-to-left.
+
+## Deployment
+
+`npm run build` then upload `dist/`. It is a static site: no server code, no
+environment variables. The web manifest and theme colour let it be added to a
+phone's home screen as a full-screen app.
+
+## Versioning
+
+Semantic versioning in `package.json`; notable changes in `CHANGELOG.md`.
