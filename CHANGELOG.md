@@ -16,6 +16,14 @@ All notable changes to this project are documented here. The format follows
   stroke with the shoulders turned to the side wall. Knees now bend the right way.
 - Players jog back to the T instead of sprinting, and sprint only when the ball
   is about to reach the opponent; the T is a small step behind the short line.
+- Forehand and backhand strokes re-animated from reference photographs:
+  direction-based arm posing with elbow/wrist/racket keyframes, shoulders
+  turned to the side wall in preparation, contact with the arm extended and the
+  racket level with the ball over a deep lunge on the opposite leg, free arm for
+  balance, racket prepared early while approaching the ball.
+- New squash racket model to real proportions: teardrop head, open throat,
+  long wrapped grip, bumper strip, shaped string bed.
+- Added `dev/poses.html`, a pose viewer for comparing the model with photographs.
 
 ### Fixed
 - WASD and the other keys did nothing on non-Latin keyboard layouts (e.g.

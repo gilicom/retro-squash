@@ -36,8 +36,48 @@ PCF soft shadow maps and MSAA.
 
 A procedural rig of `CapsuleGeometry` limbs on `Group` pivots: hips → torso
 (jersey, shorts, head, hair cap, headband) with two shoulder → elbow → hand
-chains and two hip → knee chains with shoes. The racket (grip, shaft, torus
-frame, string plane with a generated grid texture) hangs from the right hand.
+chains and two hip → knee chains with shoes.
+
+**Racket** (`racket3d.js`): built to real proportions (68.5 cm): a 21 cm grip
+with a wrapped-tape texture and coloured butt cap, slim graphite shaft, open
+throat with two struts and a bridge, a teardrop head swept as a tube along a
+Catmull-Rom outline (27 × 20 cm), a bumper strip in the player's colour, and
+a string bed cut to the head shape with a 14 × 18 string texture. The hand
+holds the top of the grip at the group origin; the head is along −y and the
+string normal is +z.
+
+**Arm posing** is direction based rather than Euler based: a stroke keyframe
+gives, in the torso's yaw frame, where the elbow is relative to the shoulder
+(E), where the wrist is relative to the elbow (W), where the racket points
+(R) and which way the strings face (N), plus the free arm (LE, LW), body yaw
+and forward lean, hip drop, stance width and knee bend. `_poseArm` converts
+the vectors to joint quaternions (`setFromUnitVectors` for the segments, a
+basis matrix for the racket) and compensates the torso's forward lean so a
+level racket stays level when the body bends over the ball. Keyframes can be
+read straight off a photograph.
+
+**Stroke keyframes** were taken from reference photographs of a coach's
+forehand preparation, forehand contact and backhand preparation (kept out of
+the repository):
+
+| Phase (t) | Forehand pose |
+| --- | --- |
+| 0 backswing | Shoulders turned ~55° to the right wall, elbow at shoulder height out to the side and back, forearm vertical, racket head up and slightly back, face open; free arm straight out to the left; feet wide, knees bent, weight on the back foot. |
+| 0.22 contact | Deep lunge on the **left** leg forward and across toward the ball, right leg trailing straight with the heel up, hips ~60 cm; torso over the front knee (~45°), arm extended to the ball out in front of the front foot, racket level with the ball (lower balls pull the arm and the body further down), strings facing the front wall; free arm thrown back and up; eyes on the ball. |
+| 0.6 follow-through | Racket continues to the target and up across the body, shoulders rotate back past square, weight transfers forward. |
+| 1 ready | Racket up in front, knees soft. |
+
+The backhand set mirrors it with the racket prepared above the head behind
+the left shoulder. The swing lasts 0.5 s; the ball is launched at t = 0 by
+the simulation, so contact at t = 0.22 is 0.1 s later.
+
+**Preparation**: while approaching the ball the ready pose blends toward the
+backswing of the side the ball is on (`prep`), so the racket is up before the
+lunge, as coaches teach.
+
+A development page, `dev/poses.html`, renders the model large at any phase and
+camera angle for side-by-side comparison with photographs (see
+DEVELOPMENT.md).
 
 `PlayerModel.update(player, ball, dt)` poses the rig from simulation state
 only (position, velocity, target, swing, run phase). The poses are modelled on

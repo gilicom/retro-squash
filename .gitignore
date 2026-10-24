@@ -19,3 +19,6 @@ Thumbs.db
 # Environment
 .env
 .env.*
+
+# Reference photos used for animation (not redistributed)
+ref/

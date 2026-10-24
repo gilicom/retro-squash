@@ -58,6 +58,24 @@ drive it from DevTools while hidden, stub `squash.pause = () => {}` and step
 with `squash.update(1/60, 1/60)` followed by
 `squash.renderer.draw({...})`.
 
+## Pose viewer
+
+`http://localhost:5173/dev/poses.html` renders one player model large, at a
+chosen stroke phase, from any angle, with a single render per load (works in
+throttled background tabs):
+
+| Parameter | Meaning |
+| --- | --- |
+| `side` | 1 forehand (default), -1 backhand |
+| `phase` | 0..1 position in the swing (0 backswing, 0.22 contact, 0.6 follow-through); omit for the ready pose |
+| `prep` | 0..1 backswing preparation blend (ready pose only) |
+| `ballY` | ball height in metres (default 0.3) |
+| `cam` | camera azimuth in degrees (0 from the front wall, 90 from the player's right) |
+| `lunge`, `run` | force lunge depth / running intensity |
+
+Example: `dev/poses.html?side=1&phase=0.22&cam=35&ballY=0.3`. Put reference
+photographs in `ref/` (git-ignored) and compare.
+
 ## Conventions
 
 - ES modules, no transpilation, no framework. Plain classes and functions.

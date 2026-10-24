@@ -148,7 +148,7 @@ export class Player {
     this.stamina = Math.min(1, Math.max(0, this.stamina));
 
     this.runPhase += speedNow * dt * 4.5;
-    if (this.swing > 0) this.swing = Math.max(0, this.swing - dt / 0.36);
+    if (this.swing > 0) this.swing = Math.max(0, this.swing - dt / 0.5);
   }
 
   /**
