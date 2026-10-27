@@ -32,7 +32,7 @@ export function drawBall(ctx, cam, ball) {
       const a = cam.project(tr[i - 1].x, tr[i - 1].y, tr[i - 1].z);
       const b = cam.project(tr[i].x, tr[i].y, tr[i].z);
       const t = i / tr.length;
-      ctx.strokeStyle = `rgba(255, 240, 160, ${0.35 * t})`;
+      ctx.strokeStyle = `rgba(40, 40, 48, ${0.3 * t})`;
       ctx.lineWidth = Math.max(1, b.s * BALL_DRAW_RADIUS * 1.4 * t);
       ctx.lineCap = 'round';
       ctx.beginPath();
@@ -44,13 +44,16 @@ export function drawBall(ctx, cam, ball) {
   const p = cam.project(ball.x, ball.y, ball.z);
   const r = Math.max(2.5, p.s * BALL_DRAW_RADIUS);
   const g = ctx.createRadialGradient(p.x - r * 0.35, p.y - r * 0.35, r * 0.1, p.x, p.y, r);
-  g.addColorStop(0, '#fffbe6');
-  g.addColorStop(0.5, '#f5e16a');
-  g.addColorStop(1, '#8a7a1e');
+  g.addColorStop(0, '#5a5a60');
+  g.addColorStop(0.5, '#1c1c20');
+  g.addColorStop(1, '#050507');
   ctx.fillStyle = g;
   ctx.beginPath();
   ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = Math.max(0.8, r * 0.18);
+  ctx.stroke();
 }
 
 /**

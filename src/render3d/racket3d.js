@@ -71,16 +71,19 @@ export function buildRacket(opts = {}) {
   const frameColor = opts.frame ?? 0x1c1c1f;
   const accent = opts.accent ?? 0xd8232a;
   const g = new THREE.Group();
-  const frameMat = new THREE.MeshStandardMaterial({ color: frameColor, roughness: 0.35, metalness: 0.45 });
+  const frameMat = new THREE.MeshPhysicalMaterial({ color: frameColor, roughness: 0.3, metalness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.25 });
   const accentMat = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.5, metalness: 0.2 });
 
   // --- grip (hand at the origin, grip runs down to -0.21)
   const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.0155, 0.0165, 0.21, 12), new THREE.MeshStandardMaterial({ map: gripTexture(), roughness: 0.95 }));
   grip.position.y = -0.105;
   g.add(grip);
-  const butt = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.012, 12), accentMat);
+  const butt = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.017, 0.014, 12), accentMat);
   butt.position.y = 0.0;
   g.add(butt);
+  const gripCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.0155, 0.01, 12), frameMat);
+  gripCollar.position.y = -0.21;
+  g.add(gripCollar);
 
   // --- shaft
   const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0125, 0.14, 10), frameMat);
@@ -103,9 +106,20 @@ export function buildRacket(opts = {}) {
   const outline = headOutline();
   const pts3 = outline.map((v) => new THREE.Vector3(v.x, v.y + headCentreY, 0));
   const curve = new THREE.CatmullRomCurve3(pts3, true, 'catmullrom', 0.5);
-  const head = new THREE.Mesh(new THREE.TubeGeometry(curve, 72, 0.0105, 8, true), frameMat);
+  const head = new THREE.Mesh(new THREE.TubeGeometry(curve, 96, 0.0115, 10, true), frameMat);
+  head.scale.z = 0.7; // real frames are wider than deep (aero section)
   head.castShadow = true;
   g.add(head);
+  // Decals: accent bands on the shaft and a small dampener at the throat.
+  for (const y of [-0.24, -0.33]) {
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.0135, 0.0135, 0.012, 12), accentMat);
+    ring.position.y = y;
+    g.add(ring);
+  }
+  const damp = new THREE.Mesh(new THREE.SphereGeometry(0.012, 10, 8), accentMat);
+  damp.position.set(0, headCentreY - 0.125, 0.006);
+  damp.scale.set(1.2, 0.8, 0.6);
+  g.add(damp);
   // Bumper strip around the top half.
   const topPts = pts3.slice(0, 4).concat(pts3.slice(-3));
   const bumperCurve = new THREE.CatmullRomCurve3([topPts[4], topPts[5], topPts[6], topPts[0], topPts[1], topPts[2], topPts[3]], false, 'catmullrom', 0.5);

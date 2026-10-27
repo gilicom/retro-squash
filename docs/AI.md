@@ -20,7 +20,13 @@ Every frame (`AIController.update`):
      1.25 m high and no longer rising fast, or
    - as a fallback, a volley point deeper than z = 3.5 m if the ball never
      offers a bounce.
-3. A **positional error** is drawn from a Gaussian with standard deviation
+3. The target is **beside** the ball, not on it: 0.45 m to the right of a ball
+   on the left half of the court (played as a backhand) and to the left of a
+   ball on the right half (forehand), 0.15 m behind it, so contact is out in
+   front on the natural side. Reach is 25 % longer on that side and 15 %
+   shorter when the ball is on the body's wrong side (`Player.canReach`), and
+   contact pressure counts stretching only beyond that arm's-length stance.
+4. A **positional error** is drawn from a Gaussian with standard deviation
    `error × (1 + distance / 3) × (1 + 1.5 × fatigue)`: long runs and tiredness
    make the AI arrive in the wrong place and reach wide (which, through the
    pressure model in PHYSICS.md, makes it hit the tin).
@@ -60,9 +66,9 @@ the human. With the current constants (3 matches each):
 
 | Opponent | human win ratio | avg hits / rally | longest rally |
 | --- | --- | --- | --- |
-| easy | ≈ 0.87 | ≈ 5 | ≈ 30 s |
-| normal | ≈ 0.77 | ≈ 11 | ≈ 30 s |
-| hard | ≈ 0.37 | ≈ 19 | ≈ 80 s |
+| easy | ≈ 0.89 | ≈ 6 | ≈ 20 s |
+| normal | ≈ 0.85 | ≈ 11 | ≈ 70 s |
+| hard | ≈ 0.27 | ≈ 25 | ≈ 2 min |
 
 A real human positions far worse than the bot, so expect lower ratios in play.
 Rallies end by tin, not-up, out and service faults in varying proportions; if a

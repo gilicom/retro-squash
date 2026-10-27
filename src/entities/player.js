@@ -158,7 +158,12 @@ export class Player {
   canReach(ball) {
     const dz = ball.z - this.z;
     const dx = ball.x - this.x;
-    return Math.abs(dz) < 0.5 && Math.abs(dx) < this.reach && ball.y > 0 && ball.y < 2.35;
+    // A right-hander reaches further when the ball is on the natural side for
+    // that half of the court (backhand on the left half, forehand on the right)
+    // and standing beside it; a ball on the body's wrong side is cramped.
+    const naturalSide = ball.x < COURT.W / 2 ? -1 : 1;
+    const limit = this.reach * (Math.sign(dx) === naturalSide ? 1.25 : 0.85);
+    return Math.abs(dz) < 0.5 && Math.abs(dx) < limit && ball.y > 0 && ball.y < 2.35;
   }
 
   /** Begin the swing animation. */

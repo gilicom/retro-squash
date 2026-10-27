@@ -34,18 +34,21 @@ PCF soft shadow maps and MSAA.
 
 ### Players (`player3d.js`)
 
-A procedural humanoid built in `body3d.js`: a lathe-shaped torso (wider at
-the chest) wearing a jersey texture with a chest band, side panels and a
-number on the back, shoulder caps, neck, an oval head with eyes, ears, hair
-and a headband, lathe shorts, tapered cylinder limbs with joint spheres at
-the shoulders, elbows, hips and knees, wrist bands, socks and capsule shoes
-with soles. Pivots: hips → torso → head, two shoulder → elbow → hand chains
-and two hip → knee → foot chains. The two players get different jersey
-numbers, skin and hair.
+A procedural humanoid built in `body3d.js`: an elliptical lathe torso
+(waist, ribcage, chest, trapezius) wearing a jersey texture with a fabric
+weave, chest band, side panels and a number on the back, deltoid caps, neck,
+a head with skull, jaw, nose, eyes with pupils, brows, ears, hair and a
+headband, striped shorts, muscled lathe limbs (biceps, forearm, quadriceps,
+calf) with joint spheres, hands with a thumb, wrist bands, striped socks and
+shoes with a toe cap, lace stripe and sole; the skin has a subtle noise
+texture. Pivots: hips → torso → head, two shoulder → elbow → hand chains and
+two hip → knee → foot chains. The two players get different jersey numbers,
+skin and hair.
 
 **Racket** (`racket3d.js`): built to real proportions (68.5 cm): a 21 cm grip
-with a wrapped-tape texture and coloured butt cap, slim graphite shaft, open
-throat with two struts and a bridge, a teardrop head swept as a tube along a
+with a wrapped-tape texture, collar and coloured butt cap, slim clear-coated
+graphite shaft with accent bands, open throat with two struts, a bridge and a
+dampener, a teardrop head swept as an aero (wider than deep) tube along a
 Catmull-Rom outline (27 × 20 cm), a bumper strip in the player's colour, and
 a string bed cut to the head shape with a 14 × 18 string texture. The hand
 holds the top of the grip at the group origin; the head is along −y and the
@@ -129,10 +132,9 @@ only ever bend backwards.
 
 ### Ball and effects (`renderer3d.js`)
 
-- Ball: 5 cm white sphere (the televised glass-court ball; black is unreadable
-  at this size), clearcoat material, casts a shadow, plus a soft **contact
-  blob** on the floor whose size and opacity follow the height, plus six
-  fading **ghost spheres** sampled from the trail.
+- Ball: 5 cm black club ball with a soft rubber clearcoat, casts a shadow,
+  plus a soft **contact blob** on the floor whose size and opacity follow the
+  height, plus six fading dark **ghost spheres** sampled from the trail.
 - T marker: a ring sprite on the floor that fades in during play and pulses
   when the human is away from the T.
 - Effects: `kind: 'ring'` (camera-facing expanding ring at racket contact) and

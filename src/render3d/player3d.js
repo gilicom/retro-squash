@@ -26,6 +26,7 @@
 import * as THREE from 'three';
 import { buildBody, THIGH, SHIN } from './body3d.js';
 import { buildRacket } from './racket3d.js';
+import { COURT } from '../config/court.js';
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const smooth = (t) => t * t * (3 - 2 * t);
@@ -73,9 +74,9 @@ function mirror(k) {
     t: k.t,
     // Preparation (backhand frames): body faces the left wall, elbow bent across the chest at
     // shoulder height, racket head up and back behind the head, free arm bent in front.
-    E: prep ? v3(-0.25, 0.3, 0.1) : m(k.E),
-    W: prep ? v3(-0.1, 0.85, 0.5) : m(k.W),
-    R: prep ? v3(-0.2, 0.6, 0.75) : m(k.R),
+    E: prep ? v3(-0.5, 0.25, 0.05) : m(k.E),
+    W: prep ? v3(-0.3, 0.8, 0.5) : m(k.W),
+    R: prep ? v3(-0.35, 0.5, 0.78) : m(k.R),
     N: prep ? v3(0.75, 0.2, -0.6) : m(k.N),
     LE: prep ? v3(-0.5, -0.5, -0.7) : m(k.LE),
     LW: prep ? v3(0.4, 0.2, -0.85) : m(k.LW),
@@ -270,9 +271,10 @@ export class PlayerModel {
       if (l > lungeT) { lungeT = l; lx = side * 0.6; lz = -0.8; }
     }
     // Racket preparation: as soon as it is this player's ball, on the side the ball is.
+    // Backhand for a ball on the left half of the court, forehand on the right half
+    // (a right-hander), so the player prepares and turns early, before the ball is beside him.
     const prepT = ball.inPlay && myTurn && swingT < 0 ? 1 : 0;
-    if (prepT > 0 && this.prep < 0.2) this.prepSide = ballSide;
-    else if (prepT > 0 && Math.abs(ball.x - p.x) > 0.25) this.prepSide = ballSide;
+    if (prepT > 0) this.prepSide = ball.x < COURT.W / 2 ? -1 : 1;
 
     const rate = 10;
     this.run = ease(this.run, runT, dt, rate);
@@ -280,7 +282,7 @@ export class PlayerModel {
     this.forward = ease(this.forward, fwdT, dt, rate);
     this.backward = ease(this.backward, bwdT, dt, rate);
     this.lunge = ease(this.lunge, lungeT, dt, lungeT > this.lunge ? 16 : 6);
-    this.prep = ease(this.prep, prepT, dt, prepT > this.prep ? 7 : 5);
+    this.prep = ease(this.prep, prepT, dt, prepT > this.prep ? 10 : 5);
     if (lungeT > 0.05) { this.lungeX = ease(this.lungeX, lx, dt, 12); this.lungeZ = ease(this.lungeZ, lz, dt, 12); }
     const run = this.run, lat = this.lateral, fwd = this.forward, bwd = this.backward, lunge = this.lunge;
 

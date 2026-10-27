@@ -11,6 +11,9 @@ import { COURT } from '../config/court.js';
 import { RECOVERY_SPEED } from '../config/difficulty.js';
 import { T_POSITION, recoverySpeed } from './player.js';
 
+/** Lateral distance the player stands from the ball's path (m): racket arm's length. */
+export const STANCE_OFFSET = 0.45;
+
 /** Gaussian random number (Box-Muller). */
 export function gauss(rand = Math.random) {
   let u = 0, v = 0;
@@ -75,7 +78,11 @@ export class AIController {
       }
     }
     if (this.prediction) {
-      this.p.setTarget(this.prediction.x + this.err.x, this.prediction.z + this.err.z);
+      // Stand beside the ball, not on it: to the right of a ball on the left half
+      // (backhand) and to the left of a ball on the right half (forehand), a little
+      // behind it so the contact is in front of the body.
+      const side = this.prediction.x < COURT.W / 2 ? 1 : -1;
+      this.p.setTarget(this.prediction.x + side * STANCE_OFFSET + this.err.x, this.prediction.z + 0.15 + this.err.z);
     }
   }
 

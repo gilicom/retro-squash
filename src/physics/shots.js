@@ -106,7 +106,8 @@ export function strikeVelocity(ball, shot, tx, rand = Math.random, error = 0) {
  * @param {{x:number,y:number,z:number}} ball
  */
 export function contactPressure(p, ball) {
-  const stretch = Math.min(1, Math.abs(ball.x - p.x) / p.reach);
+  // Standing an arm's length beside the ball is the clean position; stretching starts beyond it.
+  const stretch = Math.min(1, Math.max(0, Math.abs(ball.x - p.x) - 0.4) / p.reach);
   const low = ball.y < 0.3 ? 0.35 : 0;
   const rushing = Math.min(1, Math.hypot(p.vx, p.vz) / p.speed) * 0.4;
   const behind = ball.z > p.z + 0.2 ? 0.3 : 0;

@@ -14,6 +14,14 @@ All notable changes to this project are documented here. The format follows
   auto-continue; a DEMO badge shows in the HUD.
 
 ### Changed
+- Strokes follow the court side: a ball on the left half is played as a
+  backhand and on the right half as a forehand; the computer stands an arm's
+  length beside the ball on that side, reach is longer there, and the backhand
+  racket arm crosses to the left already while running to the ball.
+- The ball is the black club ball (both renderers).
+- Player models: muscled limbs, elliptical torso, face with jaw, nose, eyes
+  and brows, thumbs, striped shorts and socks, shoes with toe caps; rackets
+  with an aero frame section, clear coat, shaft bands, dampener and grip collar.
 - Real footsteps: feet are planted on the floor and only move by stepping
   (swing arcs sized by speed), legs solved by two-bone IK; stances and lunges
   are real steps too. Feet no longer slide.

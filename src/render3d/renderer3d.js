@@ -49,11 +49,10 @@ export class Renderer3D {
     ];
     for (const m of this.models) this.scene.add(m.root);
 
-    // Ball: the white ball used for televised glass-court squash, which reads
-    // far better than the club black ball against walls, floor and players.
+    // Ball: the black club ball with a soft rubber sheen.
     this.ball = new THREE.Mesh(
       new THREE.SphereGeometry(BALL_R, 24, 18),
-      new THREE.MeshPhysicalMaterial({ color: 0xf6f6f2, roughness: 0.45, clearcoat: 0.4, clearcoatRoughness: 0.4, emissive: 0x222222 }),
+      new THREE.MeshPhysicalMaterial({ color: 0x141416, roughness: 0.4, clearcoat: 0.5, clearcoatRoughness: 0.35 }),
     );
     this.ball.castShadow = true;
     this.scene.add(this.ball);
@@ -62,7 +61,7 @@ export class Renderer3D {
     for (let i = 0; i < 6; i++) {
       const g = new THREE.Mesh(
         new THREE.SphereGeometry(BALL_R * 0.9, 12, 10),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.0, depthWrite: false }),
+        new THREE.MeshBasicMaterial({ color: 0x202024, transparent: true, opacity: 0.0, depthWrite: false }),
       );
       this.scene.add(g);
       this.ghosts.push(g);
