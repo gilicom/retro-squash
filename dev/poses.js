@@ -55,7 +55,7 @@ scene.add(model.root);
 const qs = new URLSearchParams(location.search);
 const useModel = qs.get('model') === '1';
 const ready = loadRacketModel('/models/racket.glb').then(() => useModel
-  ? loadCharacter('/models/' + (qs.get('file') || 'player.glb')).then((gltf) => { scene.remove(model.root); model = new SkinnedPlayer(gltf, 0xc6ff2e, { hair: 0x3b2a1e }); scene.add(model.root); })
+  ? loadCharacter('/models/' + (qs.get('file') || 'player.glb')).then((gltf) => { scene.remove(model.root); model = new SkinnedPlayer(gltf, parseInt(qs.get('color') || 'c6ff2e', 16), { hair: 0x3b2a1e }); scene.add(model.root); })
   : (scene.remove(model.root), model = new PlayerModel(0xc6ff2e), scene.add(model.root)));
 const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffffff }));
 scene.add(ballMesh);
