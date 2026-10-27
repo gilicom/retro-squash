@@ -22,6 +22,13 @@ All notable changes to this project are documented here. The format follows
   `model=1` shows the rigged character.
 
 ### Changed (pose review, 2026-10-27)
+- The swing starts SWING_LEAD (0.12 s) before the ball comes within reach,
+  predicted along the ball's velocity, and a swing already under way is kept
+  through the hit, so the racket meets the ball at the contact keyframe
+  instead of at the start of the motion.
+- Keyframe string normals are put on the palm's natural side once at
+  definition time (no run-time flip), which removes the hand spin in the
+  forehand backswing.
 - A lifted heel raises the ankle by the toe lever, so feet no longer sink
   into the floor in stroke stances and steps.
 - The head looks at the ball (yaw and pitch) before and through the stroke;

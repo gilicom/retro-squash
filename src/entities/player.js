@@ -16,6 +16,12 @@ export const BOUNDS = Object.freeze({
 /** The T: where the short line meets the half-court line. Players recover here. */
 export const T_POSITION = Object.freeze({ x: COURT.W / 2, z: COURT.SHORT_LINE_Z + 0.55 });
 
+/** Swing animation length (s) and the fraction of it at which the racket meets the ball. */
+export const SWING_DURATION = 0.5;
+export const SWING_CONTACT = 0.24;
+/** How long before the racket reaches the ball the swing must start (s). */
+export const SWING_LEAD = SWING_DURATION * SWING_CONTACT;
+
 /**
  * How fast a player should recover to the T: a jog when there is time, a
  * sprint when the opponent is about to strike and the T is far away.
@@ -148,7 +154,7 @@ export class Player {
     this.stamina = Math.min(1, Math.max(0, this.stamina));
 
     this.runPhase += speedNow * dt * 4.5;
-    if (this.swing > 0) this.swing = Math.max(0, this.swing - dt / 0.5);
+    if (this.swing > 0) this.swing = Math.max(0, this.swing - dt / SWING_DURATION);
   }
 
   /**
@@ -166,9 +172,26 @@ export class Player {
     return Math.abs(dz) < 0.5 && Math.abs(dx) < limit && ball.y > 0 && ball.y < 2.35;
   }
 
-  /** Begin the swing animation. */
+  /**
+   * Begin the swing animation. A swing that was started early (see
+   * {@link anticipateSwing}) and has not reached contact yet is kept, so the
+   * racket meets the ball at the contact keyframe instead of restarting.
+   */
   startSwing(side) {
+    if (this.swing > 1 - SWING_CONTACT - 0.02) return;
     this.swing = 1;
     this.swingSide = side >= 0 ? 1 : -1;
+  }
+
+  /**
+   * Start the swing SWING_LEAD seconds before the ball comes within reach, so
+   * the contact keyframe lands on the hit: the ball's straight-line position
+   * SWING_LEAD ahead is tested with {@link canReach}.
+   * @param {{x:number,y:number,z:number,vx:number,vy:number,vz:number}} ball
+   */
+  anticipateSwing(ball) {
+    if (this.swing > 0) return;
+    const ahead = { x: ball.x + ball.vx * SWING_LEAD, y: ball.y + ball.vy * SWING_LEAD, z: ball.z + ball.vz * SWING_LEAD };
+    if (this.canReach(ahead)) this.startSwing(ahead.x - this.x);
   }
 }

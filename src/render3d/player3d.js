@@ -90,6 +90,13 @@ function mirror(k) {
   };
 }
 const BACKHAND = FOREHAND.map(mirror);
+// The strings are the same on both faces, but the palm is not: a right hand holding the racket
+// has its palm on the side of -(forearm x racket). Put every keyframe's N on that side once, so the
+// interpolation between keyframes never turns the hand over (a N on the far side would spin the
+// hand 180 degrees mid-swing).
+for (const k of [...FOREHAND, ...BACKHAND]) {
+  if (new THREE.Vector3().crossVectors(k.W, k.R).dot(k.N) > 0) k.N.negate();
+}
 
 function makePose() {
   const p = { yaw: 0, shoulders: 0, pitch: 0, drop: 0, wide: 0, knee: 0, step: 0 };
@@ -188,10 +195,6 @@ export class PlayerModel {
     if (R) {
       R = this._r.copy(R).applyAxisAngle(ax, pitch);
       N = this._n.copy(N).applyAxisAngle(ax, pitch);
-      // The strings are the same on both faces, but the palm is not: a right hand holding the racket
-      // has its palm on the side of -(forearm x racket), so keep N (the palm side) there and never
-      // let a keyframe turn the hand over.
-      if (this._wr.crossVectors(W, R).dot(N) > 0) N.negate();
     }
     const qS = this._dirQuat(E, arm.shoulder.quaternion);
     const qW = this._dirQuat(W, this._q);

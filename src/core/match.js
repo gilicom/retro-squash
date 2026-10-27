@@ -275,10 +275,12 @@ export class Match {
     if (!decision) {
       const ref = this.referee;
       for (const p of this.players) {
-        if (ref.turn === p.index && ref.frontWallHit && p.canReach(this.ball)) {
+        if (ref.turn !== p.index || !ref.frontWallHit) continue;
+        if (p.canReach(this.ball)) {
           this._strike(p);
           break;
         }
+        p.anticipateSwing(this.ball);
       }
       if (this.ball.isDead() || this.rallyClock > RALLY_TIMEOUT) decision = this.referee.onBallDead();
     }
