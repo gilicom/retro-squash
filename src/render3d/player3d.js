@@ -78,8 +78,8 @@ function mirror(k) {
     t: k.t,
     // Preparation (backhand frames): body faces the left wall, elbow bent across the chest at
     // shoulder height, racket head up and back behind the head, free arm bent in front.
-    E: prep ? v3(-0.42, 0.3, -0.55) : m(k.E),
-    W: prep ? v3(-0.3, 0.8, 0.3) : m(k.W),
+    E: prep ? v3(-0.6, 0.3, -0.62) : m(k.E),
+    W: prep ? v3(-0.35, 0.8, 0.22) : m(k.W),
     R: prep ? v3(-0.3, 0.55, 0.75) : m(k.R),
     N: prep ? v3(0.75, 0.2, -0.6) : m(k.N),
     LE: prep ? v3(-0.5, -0.5, -0.7) : m(k.LE),
@@ -411,7 +411,10 @@ export class PlayerModel {
     this.torso.rotation.x = -(pose.pitch + fwd * 0.2 + bwd * 0.05 + lunge * 0.12 + lowBall * 0.2);
     this.torso.rotation.z = -lat * 0.18 - this.lungeX * lunge * 0.15;
     this.head.rotation.x = -this.torso.rotation.x * 0.85 - (ball.inPlay ? 0.4 * clamp((1.3 - h), 0, 1) : 0);
-    this.head.rotation.y = ball.inPlay ? clamp(-Math.atan2(ball.x - p.x, -(ball.z - p.z) || 0.01) * 0.5 - this.facing - this.torso.rotation.y, -0.9, 0.9) : 0;
+    // Eyes on the ball when it is ours; while waiting on the T, watch the opponent to read the shot.
+    const watch = ball.inPlay && !myTurn && opponent && swingT < 0 ? opponent : ball;
+    const lookYaw = Math.atan2(-(watch.x - p.x), -(watch.z - p.z) || 0.01);
+    this.head.rotation.y = ball.inPlay ? clamp(lookYaw * (watch === ball ? 0.5 : 0.85) - this.facing - this.torso.rotation.y, -1.0, 1.0) : 0;
 
     // ------------------------------------------------ legs (IK to the feet)
     const cosF = Math.cos(this.facing), sinF = Math.sin(this.facing);

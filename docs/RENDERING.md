@@ -47,11 +47,14 @@ skin and hair.
 **Racket**: the game loads `public/models/racket.glb`, modelled in Blender
 (`racket-model.js`; 14k triangles, materials `RacketFrame`, `RacketGrip`,
 `RacketAccent`, `RacketStrings`; accent and strings are recoloured per
-player). It was built by script through the Blender MCP connection: a
-teardrop head swept as an aero-section tube with the throat toward the
-shaft, open throat with two struts and a bridge, dampener, octagonal grip
-with collar and butt cap, shaft bands, bumper at the tip, and real string
-tubes (14 × 18). Preview: `docs/design/racket-render.png`. If the file is
+player). It was built by script through the Blender MCP connection to the measured
+proportions of a real racket (Tecnifibre Carboflex photo in `ref/`): 685 mm
+long, 178 mm octagonal grip with collar and butt cap, 130 mm shaft with two
+accent bands, a slim flattened throat the two frame arms sink into, a 375 mm
+teardrop head whose 210 mm maximum width sits 150 mm below the tip, a 13 ×
+17 mm beam (deeper than wide), a bumper at the tip, a small throat bar and
+real string tubes (14 mains × 18 crosses reaching down to the throat); 26k
+triangles. Preview: `docs/design/racket-render.png`. If the file is
 missing, the procedural racket below is used.
 
 **Procedural racket** (`racket3d.js`, fallback): built to real proportions (68.5 cm): a 21 cm grip

@@ -26,6 +26,12 @@ All notable changes to this project are documented here. The format follows
   body with a Mixamo rig and a baked skin texture, kit extracted from the body
   (shirt, shorts, socks, shoes with vertex-colour accents), hair cap, eyes,
   headband and wristbands; team colour swaps the accent per player.
+- Racket remodelled to the measured proportions of a real squash racket
+  (Tecnifibre Carboflex reference): 685 mm, 178 mm grip, 130 mm shaft, head
+  375 mm tip to throat with its 210 mm maximum width 150 mm below the tip,
+  arms sinking into a slim throat, 13 x 17 mm beam, strings down to the throat.
+- Players watch the opponent while waiting on the T and the ball when it is
+  their shot; the backhand preparation holds the arm further from the body.
 - Racket modelled in Blender (`public/models/racket.glb`), loaded and tinted
   per player; the procedural racket remains the fallback.
 
