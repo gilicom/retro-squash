@@ -17,6 +17,11 @@
  */
 import * as THREE from 'three';
 import { PlayerModel } from '../src/render3d/player3d.js';
+import { COURT } from '../src/config/court.js';
+
+// The model is placed on the court's centre line so the court-half logic
+// (backhand on the left half, forehand on the right) matches the ball side.
+const CX = COURT.W / 2;
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -28,9 +33,12 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x2a2f36);
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshStandardMaterial({ color: 0xc9a26c, roughness: 0.6 }));
 floor.rotation.x = -Math.PI / 2;
+floor.position.x = CX;
 floor.receiveShadow = true;
 scene.add(floor);
-scene.add(new THREE.GridHelper(6, 12, 0x885522, 0x885522));
+const grid = new THREE.GridHelper(6, 12, 0x885522, 0x885522);
+grid.position.x = CX;
+scene.add(grid);
 scene.add(new THREE.HemisphereLight(0xffffff, 0x665544, 0.9));
 const key = new THREE.DirectionalLight(0xffffff, 2.0);
 key.position.set(2, 5, 3);
@@ -66,11 +74,11 @@ window.render = function render(o = {}) {
   const a = THREE.MathUtils.degToRad(p.cam);
   camera.fov = 30;
   camera.updateProjectionMatrix();
-  camera.position.set(Math.sin(a) * 4.6, 1.3, -Math.cos(a) * 4.6);
-  camera.lookAt(0, 0.8, 0);
+  camera.position.set(CX + Math.sin(a) * 4.6, 1.3, -Math.cos(a) * 4.6);
+  camera.lookAt(CX, 0.8, 0);
 
-  const player = fakePlayer({ swing: p.phase === null ? 0 : 1 - p.phase, swingSide: p.side, vz: -p.run * 3, targetZ: -1 });
-  const ball = { x: p.side * 0.9, y: p.ballY, z: -0.5, inPlay: true };
+  const player = fakePlayer({ x: CX, targetX: CX, swing: p.phase === null ? 0 : 1 - p.phase, swingSide: p.side, vz: -p.run * 3, targetZ: -1 });
+  const ball = { x: CX + p.side * 0.9, y: p.ballY, z: -0.5, inPlay: true };
   ballMesh.position.set(ball.x, ball.y, ball.z);
   // Settle the smoothed parameters by stepping a few frames with the same state.
   model.prep = p.phase === null ? p.prep : 0;

@@ -57,7 +57,7 @@ const ANKLE = 0.035;
  */
 const FOREHAND = [
   // 1. preparation (frame 1): the whole body faces the right side wall (90°), shoulders turned a little further.
-  { t: 0.0, E: v3(0.9, 0.15, 0.35), W: v3(0.05, 0.95, 0.3), R: v3(-0.15, 0.95, 0.25), N: v3(-0.7, 0.05, -0.7), LE: v3(0.3, -0.6, -0.75), LW: v3(0.4, -0.45, -0.8), yaw: -1.57, shoulders: -0.3, pitch: 0.22, drop: 0.06, wide: 0.12, knee: 0.3, step: 0.8 },
+  { t: 0.0, E: v3(0.9, 0.15, 0.35), W: v3(0.05, 0.95, 0.3), R: v3(-0.15, 0.95, 0.25), N: v3(-0.7, 0.05, -0.7), LE: v3(0.3, -0.6, -0.75), LW: v3(0.4, -0.45, -0.8), yaw: -1.57, shoulders: -0.82, pitch: 0.22, drop: 0.06, wide: 0.12, knee: 0.3, step: 0.8 },
   // 2. contact (frame 2): hips still side-on, shoulders opening toward the front wall.
   { t: 0.24, E: v3(0.55, -0.75, -0.35), W: v3(0.6, -0.5, -0.6), R: v3(0.9, -0.05, -0.45), N: v3(0.1, 0.25, -0.95), LE: v3(-0.6, -0.1, 0.8), LW: v3(-0.5, -0.3, 0.8), yaw: -1.2, shoulders: 0.35, pitch: 0.5, drop: 0.06, wide: 0.15, knee: 0.45, step: 1.0 },
   // 3. follow-through (frame 3): body rotates to face the front wall.
@@ -80,7 +80,7 @@ function mirror(k) {
     N: prep ? v3(0.75, 0.2, -0.6) : m(k.N),
     LE: prep ? v3(-0.5, -0.5, -0.7) : m(k.LE),
     LW: prep ? v3(0.4, 0.2, -0.85) : m(k.LW),
-    yaw: -k.yaw, shoulders: prep ? 0.55 : -k.shoulders, pitch: k.pitch, drop: k.drop, wide: k.wide, knee: k.knee, step: k.step,
+    yaw: -k.yaw, shoulders: prep ? 1.07 : -k.shoulders, pitch: k.pitch, drop: k.drop, wide: k.wide, knee: k.knee, step: k.step,
   };
 }
 const BACKHAND = FOREHAND.map(mirror);
