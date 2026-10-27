@@ -24,6 +24,13 @@ All notable changes to this project are documented here. The format follows
 - New squash racket model to real proportions: teardrop head, open throat,
   long wrapped grip, bumper strip, shaped string bed.
 - Added `dev/poses.html`, a pose viewer for comparing the model with photographs.
+- New player rig (`body3d.js`): shaped torso with a textured jersey (chest
+  band, number), shoulder caps, neck, head with eyes, ears and hair, tapered
+  limbs with joint spheres, wrist bands, socks and shoes; players differ in
+  number, skin and hair.
+- Forehand retimed to three reference frames: frame-1 preparation held while
+  running to the ball (backhand mirrored on the other side), both knees bent
+  deep at contact, high follow-through on the opposite side.
 
 ### Fixed
 - WASD and the other keys did nothing on non-Latin keyboard layouts (e.g.

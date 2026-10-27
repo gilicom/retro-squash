@@ -34,9 +34,14 @@ PCF soft shadow maps and MSAA.
 
 ### Players (`player3d.js`)
 
-A procedural rig of `CapsuleGeometry` limbs on `Group` pivots: hips → torso
-(jersey, shorts, head, hair cap, headband) with two shoulder → elbow → hand
-chains and two hip → knee chains with shoes.
+A procedural humanoid built in `body3d.js`: a lathe-shaped torso (wider at
+the chest) wearing a jersey texture with a chest band, side panels and a
+number on the back, shoulder caps, neck, an oval head with eyes, ears, hair
+and a headband, lathe shorts, tapered cylinder limbs with joint spheres at
+the shoulders, elbows, hips and knees, wrist bands, socks and capsule shoes
+with soles. Pivots: hips → torso → head, two shoulder → elbow → hand chains
+and two hip → knee → foot chains. The two players get different jersey
+numbers, skin and hair.
 
 **Racket** (`racket3d.js`): built to real proportions (68.5 cm): a 21 cm grip
 with a wrapped-tape texture and coloured butt cap, slim graphite shaft, open
@@ -56,24 +61,25 @@ basis matrix for the racket) and compensates the torso's forward lean so a
 level racket stays level when the body bends over the ball. Keyframes can be
 read straight off a photograph.
 
-**Stroke keyframes** were taken from reference photographs of a coach's
-forehand preparation, forehand contact and backhand preparation (kept out of
-the repository):
+**Stroke keyframes** were taken from three reference frames of a forehand
+filmed from behind (kept out of the repository):
 
 | Phase (t) | Forehand pose |
 | --- | --- |
-| 0 backswing | Shoulders turned ~55° to the right wall, elbow at shoulder height out to the side and back, forearm vertical, racket head up and slightly back, face open; free arm straight out to the left; feet wide, knees bent, weight on the back foot. |
-| 0.22 contact | Deep lunge on the **left** leg forward and across toward the ball, right leg trailing straight with the heel up, hips ~60 cm; torso over the front knee (~45°), arm extended to the ball out in front of the front foot, racket level with the ball (lower balls pull the arm and the body further down), strings facing the front wall; free arm thrown back and up; eyes on the ball. |
-| 0.6 follow-through | Racket continues to the target and up across the body, shoulders rotate back past square, weight transfers forward. |
+| 0 preparation (frame 1) | Body turned ~70° to the right wall, left foot forward toward the front wall and right foot back with the heel up, knees bent; elbow at shoulder height out to the side, forearm vertical, racket head straight up above the shoulder; free hand pointing forward-down at the ball; eyes on the ball. |
+| 0.24 contact (frame 2) | **Both** knees bent deep, hips ~55 cm, body bent ~45° over the front (left) foot; arm extended to the ball at ankle height, racket level with the ball (lower balls pull the arm and the body further down), strings facing the front wall; free arm trailing behind. |
+| 0.62 follow-through (frame 3) | Shoulders rotate to face the front wall, racket comes up high on the left side with the elbow bent, weight on the front foot, back leg trailing; free arm tucked back. |
 | 1 ready | Racket up in front, knees soft. |
 
-The backhand set mirrors it with the racket prepared above the head behind
-the left shoulder. The swing lasts 0.5 s; the ball is launched at t = 0 by
-the simulation, so contact at t = 0.22 is 0.1 s later.
+The backhand mirrors the set, with the racket prepared above the left
+shoulder. The swing lasts 0.5 s; the ball is launched at t = 0 by the
+simulation, so contact at t = 0.24 is 0.12 s later.
 
-**Preparation**: while approaching the ball the ready pose blends toward the
-backswing of the side the ball is on (`prep`), so the racket is up before the
-lunge, as coaches teach.
+**Preparation while running**: as soon as it is a player's ball (the game
+passes `referee.turn` to the renderer), the racket arm takes the frame-1
+preparation on the side the ball is on, even at full run; the body turn,
+stagger and knee bend of that pose fade with running speed so the legs keep
+running until the lunge. The opponent, running back to the T, does not prepare.
 
 A development page, `dev/poses.html`, renders the model large at any phase and
 camera angle for side-by-side comparison with photographs (see

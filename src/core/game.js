@@ -183,6 +183,7 @@ export class Game {
       effects: m.effects,
       dt,
       inPlay: this.mode === 'play' && (m.state === 'rally' || m.state === 'serve'),
+      turn: m.referee.turn,
     });
     requestAnimationFrame((t) => this._frame(t));
   }

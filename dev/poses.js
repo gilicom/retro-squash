@@ -5,7 +5,7 @@
  * Open http://localhost:5173/dev/poses.html with query parameters:
  *   side   1 = forehand (default), -1 = backhand
  *   phase  0..1 position in the swing (0 = backswing, 0.22 = contact); omit for the ready pose
- *   prep   0..1 backswing preparation blend when phase is omitted
+ *   prep   1 = prepare the racket (ready pose only; the player whose turn it is prepares)
  *   ballY  ball height in metres (default 0.3)
  *   cam    camera azimuth in degrees around the player (0 = from the front wall, 90 = from the right)
  *   lunge  0..1 force a lunge (default: from the pose)
@@ -48,7 +48,7 @@ const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
 function params() {
   const q = new URLSearchParams(location.search);
   const n = (k, d) => (q.has(k) ? Number(q.get(k)) : d);
-  return { side: n('side', 1), phase: q.has('phase') ? n('phase', 0) : null, prep: n('prep', 0), ballY: n('ballY', 0.3), cam: n('cam', 35), lunge: q.has('lunge') ? n('lunge', 0) : null, run: n('run', 0) };
+  return { side: n('side', 1), phase: q.has('phase') ? n('phase', 0) : null, prep: n('prep', 0), ballY: n('ballY', 0.3), cam: n('cam', 35), lunge: q.has('lunge') ? n('lunge', 0) : null, run: n('run', 0), turn: n('turn', 1) };
 }
 
 /** Fake simulation state matching what PlayerModel reads from a Player. */
@@ -75,10 +75,9 @@ window.render = function render(o = {}) {
   // Settle the smoothed parameters by stepping a few frames with the same state.
   model.prep = p.phase === null ? p.prep : 0;
   model.prepSide = p.side;
-  for (let i = 0; i < 60; i++) {
-    model.update(player, ball, 1 / 60);
+  for (let i = 0; i < 90; i++) {
+    model.update(player, ball, 1 / 60, undefined, p.phase === null ? p.turn === 1 && p.prep > 0 : false);
     if (p.lunge !== null) model.lunge = p.lunge;
-    model.prep = p.phase === null ? p.prep : 0;
   }
   renderer.render(scene, camera);
   document.getElementById('hud').textContent = JSON.stringify(p);

@@ -43,7 +43,10 @@ export class Renderer3D {
     buildCourt(this.scene, this.gl);
 
     // Players.
-    this.models = [new PlayerModel(0x2f7df6), new PlayerModel(0xe5483c)];
+    this.models = [
+      new PlayerModel(0x2f7df6, { number: 7, skin: 0xe3b48c, hair: 0x2a1c12 }),
+      new PlayerModel(0xe5483c, { number: 3, skin: 0xc48a5a, hair: 0x111111 }),
+    ];
     for (const m of this.models) this.scene.add(m.root);
 
     // Ball: the white ball used for televised glass-court squash, which reads
@@ -163,7 +166,8 @@ export class Renderer3D {
   draw(scene) {
     const { ball, players, effects, dt } = scene;
 
-    for (let i = 0; i < players.length; i++) this.models[i].update(players[i], ball, dt, players[1 - i]);
+    const turn = scene.turn ?? 0;
+    for (let i = 0; i < players.length; i++) this.models[i].update(players[i], ball, dt, players[1 - i], turn === i);
 
     // Ball, blob and trail.
     this.ball.position.set(ball.x, Math.max(ball.y, BALL_R), ball.z);

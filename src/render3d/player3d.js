@@ -1,37 +1,30 @@
 /**
  * @module render3d/player3d
- * Articulated low-poly player: hips, torso, head, two legs (hip + knee) and
- * two arms (shoulder + elbow + wrist) with a squash racket in the right hand.
- * Every joint is a THREE.Group pivot posed procedurally from the Player's
- * movement and swing state; no animation files are needed.
+ * Procedural player animation on the rig from {@link module:render3d/body3d}.
  *
  * Movement poses follow coaching material (docs/RENDERING.md). Stroke poses
- * were taken from reference photographs in `ref/` (forehand preparation,
- * forehand contact, backhand preparation):
- *   - preparation: shoulders turned to the side wall, elbow high, racket head
- *     pointing up, free arm out for balance, knees bent, eyes on the ball;
- *   - contact: deep lunge on the leg opposite the racket side, arm extended
- *     to the ball out in front of the front foot, racket level with the
- *     ball, torso over the front knee, free arm thrown back;
- *   - follow-through: racket continues to the target and up, shoulders
- *     rotate back square to the front wall.
+ * come from reference frames of a forehand (kept out of the repository):
+ *   1. preparation while moving to the ball: body turned to the side wall,
+ *      front foot (left for a forehand) toward the front wall, elbow at
+ *      shoulder height, racket head straight up above the shoulder, free hand
+ *      pointing at the ball;
+ *   2. contact: both knees bent deep, body low and bent ~45° over the front
+ *      foot, arm extended to the ball at ankle height, racket level, free arm
+ *      trailing behind;
+ *   3. follow-through: shoulders rotate to the front wall, racket comes up
+ *      high on the opposite side with the elbow bent, weight on the front foot.
+ * The backhand mirrors the set, with the racket prepared on the other side.
  *
- * Arms are posed with direction vectors in the torso frame (where the
- * elbow and the wrist should be, and where the racket should point) rather
- * than Euler angles, so poses can be read straight off a photograph.
+ * Arms are posed with direction vectors in the torso's yaw frame (where the
+ * elbow and wrist should be and where the racket points), compensated for
+ * the torso's forward lean, so poses can be read straight off a photograph.
  *
- * Model frame: built facing -z (toward the front wall); +x is the player's
- * right. root.rotation.y < 0 turns the body toward the right side wall.
+ * Model frame: faces -z (toward the front wall); +x is the player's right.
+ * root.rotation.y < 0 turns the body toward the right side wall.
  */
 import * as THREE from 'three';
+import { buildBody } from './body3d.js';
 import { buildRacket } from './racket3d.js';
-
-const SKIN = 0xe3b48c;
-const SHORTS = 0x1e2430;
-const SHOE = 0xf4f4f4;
-
-const UPPER_ARM = 0.26;
-const FOREARM = 0.26;
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const smooth = (t) => t * t * (3 - 2 * t);
@@ -42,42 +35,49 @@ const Y_DOWN = new THREE.Vector3(0, -1, 0);
 const v3 = (x, y, z) => new THREE.Vector3(x, y, z).normalize();
 const nlerp = (a, b, t, out) => out.copy(a).lerp(b, t).normalize();
 
-function capsule(r, len, material, y = 0) {
-  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 4, 12), material);
-  m.position.y = y;
-  m.castShadow = true;
-  return m;
-}
-
-function pivot(x, y, z) {
-  const g = new THREE.Group();
-  g.position.set(x, y, z);
-  return g;
-}
+const VEC_KEYS = ['E', 'W', 'R', 'N', 'LE', 'LW'];
+const NUM_KEYS = ['yaw', 'pitch', 'drop', 'wide', 'knee', 'step'];
 
 /**
- * Stroke keyframes in the torso frame (x right, y up, z back; -z is toward
- * the front wall). E = elbow direction from the shoulder, W = wrist direction
- * from the elbow, R = racket direction from the hand, N = string-face normal.
- * LE / LW = free arm. yaw = body turn (negative = toward the right wall),
- * pitch = forward bend, drop = extra hip drop (m).
+ * Stroke keyframes (forehand, right-handed). Torso yaw frame: x right, y up,
+ * z back (-z toward the front wall).
+ *   E elbow dir from shoulder, W wrist dir from elbow, R racket dir, N string normal,
+ *   LE/LW free arm, yaw body turn (negative = right wall), pitch forward lean,
+ *   drop hip drop (m), wide extra foot spread, knee extra bend (both knees),
+ *   step front-foot-forward amount (front foot = opposite the racket side).
  */
 const FOREHAND = [
-  { t: 0.0, E: v3(0.85, 0.1, 0.5), W: v3(0.1, 0.9, 0.4), R: v3(-0.2, 0.8, 0.55), N: v3(-0.6, 0.2, -0.75), LE: v3(-0.9, 0.25, -0.3), LW: v3(-0.95, 0.1, 0.2), yaw: -1.0, pitch: 0.3, drop: 0.07, wide: 0.3, knee: 0.35 },
-  { t: 0.22, E: v3(0.55, -0.7, -0.4), W: v3(0.65, -0.45, -0.6), R: v3(0.9, -0.05, -0.45), N: v3(0.1, 0.25, -0.95), LE: v3(-0.85, 0.35, 0.4), LW: v3(-0.8, 0.3, 0.5), yaw: -0.35, pitch: 0.42, drop: 0.06, wide: 0.1, knee: 0.1 },
-  { t: 0.6, E: v3(-0.25, 0.15, -0.95), W: v3(-0.7, 0.5, -0.5), R: v3(-0.55, 0.8, -0.25), N: v3(-0.6, 0.3, -0.75), LE: v3(-0.7, 0.1, 0.7), LW: v3(-0.5, 0.4, 0.75), yaw: 0.25, pitch: 0.3, drop: 0.03, wide: 0.15, knee: 0.15 },
-  { t: 1.0, E: v3(0.35, -0.85, -0.35), W: v3(0.2, 0.35, -0.9), R: v3(0.05, 0.85, -0.5), N: v3(-0.7, 0, -0.7), LE: v3(-0.4, -0.8, -0.4), LW: v3(-0.1, -0.2, -0.95), yaw: 0, pitch: 0.14, drop: 0, wide: 0, knee: 0 },
+  // 1. preparation (frame 1)
+  { t: 0.0, E: v3(0.9, 0.15, 0.35), W: v3(0.05, 0.95, 0.3), R: v3(-0.15, 0.95, 0.25), N: v3(-0.7, 0.05, -0.7), LE: v3(0.3, -0.6, -0.75), LW: v3(0.4, -0.45, -0.8), yaw: -1.25, pitch: 0.22, drop: 0.06, wide: 0.12, knee: 0.3, step: 0.8 },
+  // 2. contact (frame 2)
+  { t: 0.24, E: v3(0.55, -0.75, -0.35), W: v3(0.6, -0.5, -0.6), R: v3(0.9, -0.05, -0.45), N: v3(0.1, 0.25, -0.95), LE: v3(-0.6, -0.1, 0.8), LW: v3(-0.5, -0.3, 0.8), yaw: -0.6, pitch: 0.5, drop: 0.14, wide: 0.15, knee: 0.55, step: 1.0 },
+  // 3. follow-through (frame 3)
+  { t: 0.62, E: v3(-0.2, 0.35, -0.85), W: v3(-0.5, 0.8, -0.3), R: v3(-0.3, 0.85, 0.4), N: v3(0.6, 0.3, -0.7), LE: v3(-0.45, -0.4, 0.75), LW: v3(-0.3, -0.5, 0.8), yaw: 0.2, pitch: 0.25, drop: 0.05, wide: 0.1, knee: 0.3, step: 0.7 },
+  // ready
+  { t: 1.0, E: v3(0.35, -0.85, -0.35), W: v3(0.2, 0.35, -0.9), R: v3(0.05, 0.85, -0.5), N: v3(-0.7, 0, -0.7), LE: v3(-0.4, -0.8, -0.4), LW: v3(-0.1, -0.2, -0.95), yaw: 0, pitch: 0.14, drop: 0, wide: 0, knee: 0, step: 0 },
 ];
 
-const BACKHAND = [
-  { t: 0.0, E: v3(-0.3, 0.35, 0.3), W: v3(-0.2, 0.9, 0.35), R: v3(-0.3, 0.7, 0.65), N: v3(0.7, 0.3, -0.65), LE: v3(-0.6, -0.3, 0.7), LW: v3(-0.3, -0.5, 0.8), yaw: 1.05, pitch: 0.3, drop: 0.07, wide: 0.3, knee: 0.35 },
-  { t: 0.22, E: v3(-0.55, -0.7, -0.4), W: v3(-0.65, -0.45, -0.6), R: v3(-0.9, -0.05, -0.45), N: v3(-0.1, 0.25, -0.95), LE: v3(0.75, 0.3, 0.55), LW: v3(0.8, 0.2, 0.55), yaw: 0.35, pitch: 0.42, drop: 0.06, wide: 0.1, knee: 0.1 },
-  { t: 0.6, E: v3(-0.8, 0.3, -0.5), W: v3(-0.55, 0.75, -0.35), R: v3(-0.35, 0.9, 0.1), N: v3(0.6, 0.3, -0.75), LE: v3(0.6, 0.0, 0.8), LW: v3(0.5, 0.3, 0.8), yaw: -0.25, pitch: 0.3, drop: 0.03, wide: 0.15, knee: 0.15 },
-  { t: 1.0, E: v3(0.35, -0.85, -0.35), W: v3(0.2, 0.35, -0.9), R: v3(0.05, 0.85, -0.5), N: v3(-0.7, 0, -0.7), LE: v3(-0.4, -0.8, -0.4), LW: v3(-0.1, -0.2, -0.95), yaw: 0, pitch: 0.14, drop: 0, wide: 0, knee: 0 },
-];
+/** Mirror a forehand keyframe across the body for the backhand (racket stays in the right hand). */
+function mirror(k) {
+  const m = (v) => v3(-v.x, v.y, v.z);
+  return {
+    t: k.t,
+    // Racket arm crosses the body: elbow in front of the chest, racket above the left shoulder.
+    E: k.t === 0 ? v3(-0.35, 0.4, 0.2) : m(k.E),
+    W: k.t === 0 ? v3(-0.25, 0.9, 0.35) : m(k.W),
+    R: k.t === 0 ? v3(-0.3, 0.8, 0.5) : m(k.R),
+    N: m(k.N),
+    LE: m(k.LE), LW: m(k.LW),
+    yaw: -k.yaw, pitch: k.pitch, drop: k.drop, wide: k.wide, knee: k.knee, step: k.step,
+  };
+}
+const BACKHAND = FOREHAND.map(mirror);
 
-/** Ready pose (same as the last keyframe) and the running pump for the free arm. */
-const READY = FOREHAND[3];
+function makePose() {
+  const p = { yaw: 0, pitch: 0, drop: 0, wide: 0, knee: 0, step: 0 };
+  for (const k of VEC_KEYS) p[k] = new THREE.Vector3();
+  return p;
+}
 
 /** Interpolate a keyframe list at time t (0..1) into `out`. */
 function sampleKeys(keys, t, out) {
@@ -85,91 +85,33 @@ function sampleKeys(keys, t, out) {
   while (i < keys.length - 2 && t > keys[i + 1].t) i++;
   const a = keys[i], b = keys[i + 1];
   const u = smooth(clamp((t - a.t) / (b.t - a.t), 0, 1));
-  for (const k of ['E', 'W', 'R', 'N', 'LE', 'LW']) nlerp(a[k], b[k], u, out[k]);
-  for (const k of ['yaw', 'pitch', 'drop', 'wide', 'knee']) out[k] = lerp(a[k], b[k], u);
+  for (const k of VEC_KEYS) nlerp(a[k], b[k], u, out[k]);
+  for (const k of NUM_KEYS) out[k] = lerp(a[k], b[k], u);
   return out;
 }
 
-function makePose() {
-  return { E: new THREE.Vector3(), W: new THREE.Vector3(), R: new THREE.Vector3(), N: new THREE.Vector3(), LE: new THREE.Vector3(), LW: new THREE.Vector3(), yaw: 0, pitch: 0, drop: 0, wide: 0, knee: 0 };
-}
-
-/** Blend pose b into a by amount t (in place in a). */
+/** Blend pose b into a by amount t (in place). */
 function blendPose(a, b, t) {
-  for (const k of ['E', 'W', 'R', 'N', 'LE', 'LW']) nlerp(a[k], b[k], t, a[k]);
-  for (const k of ['yaw', 'pitch', 'drop', 'wide', 'knee']) a[k] = lerp(a[k], b[k], t);
+  for (const k of VEC_KEYS) nlerp(a[k], b[k], t, a[k]);
+  for (const k of NUM_KEYS) a[k] = lerp(a[k], b[k], t);
   return a;
 }
 
 export class PlayerModel {
   /**
    * @param {number} color jersey colour
+   * @param {{number?:number, skin?:number, hair?:number}} [look]
    */
-  constructor(color) {
-    this.root = new THREE.Group();
-    const jersey = new THREE.MeshStandardMaterial({ color, roughness: 0.75 });
-    const skin = new THREE.MeshStandardMaterial({ color: SKIN, roughness: 0.6 });
-    const shorts = new THREE.MeshStandardMaterial({ color: SHORTS, roughness: 0.8 });
-    const shoe = new THREE.MeshStandardMaterial({ color: SHOE, roughness: 0.5 });
-    const hair = new THREE.MeshStandardMaterial({ color: 0x2a1c12, roughness: 0.9 });
-
-    this.hips = pivot(0, 0.95, 0);
-    this.root.add(this.hips);
-
-    // Torso and head.
-    this.torso = new THREE.Group();
-    this.hips.add(this.torso);
-    this.torso.add(capsule(0.16, 0.22, jersey, 0.3));
-    this.torso.add(capsule(0.175, 0.06, shorts, -0.02));
-    this.head = new THREE.Group();
-    this.head.position.y = 0.73;
-    this.torso.add(this.head);
-    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.11, 20, 16), skin);
-    headMesh.castShadow = true;
-    this.head.add(headMesh);
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.115, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hair);
-    cap.position.y = 0.015;
-    this.head.add(cap);
-    const band = new THREE.Mesh(new THREE.TorusGeometry(0.108, 0.014, 8, 24), jersey);
-    band.rotation.x = Math.PI / 2;
-    band.position.y = 0.04;
-    this.head.add(band);
-
-    // Legs.
-    this.legs = [];
-    for (const side of [-1, 1]) {
-      const hip = pivot(side * 0.11, 0, 0);
-      this.hips.add(hip);
-      hip.add(capsule(0.07, 0.26, shorts, -0.2));
-      const knee = pivot(0, -0.42, 0);
-      hip.add(knee);
-      knee.add(capsule(0.06, 0.28, skin, -0.2));
-      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.07, 0.25), shoe);
-      foot.position.set(0, -0.5, -0.05);
-      foot.castShadow = true;
-      knee.add(foot);
-      this.legs.push({ hip, knee, foot, side });
-    }
-
-    // Arms: shoulder -> elbow -> hand pivots; segments hang along -y.
-    this.arms = [];
-    for (const side of [-1, 1]) {
-      const shoulder = pivot(side * 0.22, 0.5, 0);
-      this.torso.add(shoulder);
-      shoulder.add(capsule(0.05, UPPER_ARM - 0.1, jersey, -UPPER_ARM / 2));
-      const elbow = pivot(0, -UPPER_ARM, 0);
-      shoulder.add(elbow);
-      elbow.add(capsule(0.045, FOREARM - 0.09, skin, -FOREARM / 2));
-      const hand = pivot(0, -FOREARM, 0);
-      elbow.add(hand);
-      hand.add(new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 10), skin));
-      this.arms.push({ shoulder, elbow, hand, side });
-    }
-
+  constructor(color, look = {}) {
+    const body = buildBody({ color, ...look });
+    this.root = body.root;
+    this.hips = body.hips;
+    this.torso = body.torso;
+    this.head = body.head;
+    this.legs = body.legs;
+    this.arms = body.arms;
     this.racket = buildRacket({ accent: color });
     this.arms[1].hand.add(this.racket);
-
-    this.root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 
     // Smoothed animation state.
     this.facing = 0;
@@ -182,7 +124,7 @@ export class PlayerModel {
     this.lungeZ = -1;
     this.split = 0;
     this.prevOppSwing = 0;
-    this.prep = 0;          // 0..1 how far the backswing is prepared while approaching the ball
+    this.prep = 0;
     this.prepSide = 1;
     this.time = 0;
     this.pose = makePose();
@@ -197,14 +139,13 @@ export class PlayerModel {
     this._e = new THREE.Vector3(); this._w = new THREE.Vector3(); this._r = new THREE.Vector3(); this._n = new THREE.Vector3();
   }
 
-  /** Quaternion rotating the hanging (-y) segment onto `dir`. */
   _dirQuat(dir, out) {
     return out.setFromUnitVectors(Y_DOWN, dir);
   }
 
   /**
    * Pose one arm from direction vectors given in the torso's yaw frame but
-   * ignoring its forward lean (so a level racket stays level when the body
+   * ignoring its forward lean (a level racket stays level when the body
    * bends over the ball).
    */
   _poseArm(arm, E, W, R, N) {
@@ -217,7 +158,6 @@ export class PlayerModel {
     const qW = this._dirQuat(W, this._q);
     arm.elbow.quaternion.copy(qS).invert().multiply(qW);
     if (R) {
-      // Racket basis: handle axis (local -y) along R, string normal (local +z) along N.
       const y = this._y.copy(R).negate();
       const z = this._z.copy(N).addScaledVector(y, -N.dot(y)).normalize();
       const x = this._x.crossVectors(y, z).normalize();
@@ -234,8 +174,9 @@ export class PlayerModel {
    * @param {{x:number,y:number,z:number,inPlay?:boolean}} ball
    * @param {number} dt
    * @param {import('../entities/player.js').Player} [opponent] used to time the split step
+   * @param {boolean} [myTurn=true] whether this player must play the next ball (prepares the racket)
    */
-  update(p, ball, dt, opponent) {
+  update(p, ball, dt, opponent, myTurn = true) {
     const r = this.root;
     r.position.set(p.x, 0, p.z);
     this.time += dt;
@@ -263,19 +204,22 @@ export class PlayerModel {
     const swingT = p.swing > 0 ? 1 - p.swing : -1;
     const side = p.swingSide;
     const ballSide = ball.x >= p.x ? 1 : -1;
+    const inStroke = swingT >= 0 && swingT < 0.75;
 
     // Lunge: last stride before the target while moving fast, or the stroke itself.
     let lungeT = 0, lx = dirX, lz = dirZ;
     if (speed > 1.2 && distToTarget < 0.9) lungeT = clamp(1 - distToTarget / 0.9, 0, 1) * clamp(speed / 2.5, 0, 1);
-    if (swingT >= 0 && swingT < 0.75) {
+    if (inStroke) {
       const reach = clamp(Math.abs(ball.x - p.x) / Math.max(0.3, p.reach), 0, 1);
       const bell = Math.sin(Math.PI * clamp(swingT / 0.75, 0, 1));
-      const l = (0.45 + 0.55 * reach) * Math.min(1, 0.45 + bell);
-      if (l > lungeT) { lungeT = l; lx = side * 0.7; lz = -0.7; }
+      // Little lunge in the preparation (the stance is set by the keyframe), full lunge into contact.
+      const l = (0.35 + 0.65 * reach) * Math.min(1, 0.1 + bell * 1.2);
+      if (l > lungeT) { lungeT = l; lx = side * 0.6; lz = -0.8; }
     }
-    // Backswing preparation while approaching the ball.
-    const prepT = ball.inPlay && swingT < 0 && Math.hypot(ball.x - p.x, ball.z - p.z) < 3.5 ? clamp(runT * 0.9 + lungeT, 0, 1) : 0;
-    if (prepT > 0.05) this.prepSide = ballSide;
+    // Racket preparation: as soon as it is this player's ball, on the side the ball is.
+    const prepT = ball.inPlay && myTurn && swingT < 0 ? 1 : 0;
+    if (prepT > 0 && this.prep < 0.2) this.prepSide = ballSide;
+    else if (prepT > 0 && Math.abs(ball.x - p.x) > 0.25) this.prepSide = ballSide;
 
     const rate = 10;
     this.run = ease(this.run, runT, dt, rate);
@@ -283,7 +227,7 @@ export class PlayerModel {
     this.forward = ease(this.forward, fwdT, dt, rate);
     this.backward = ease(this.backward, bwdT, dt, rate);
     this.lunge = ease(this.lunge, lungeT, dt, lungeT > this.lunge ? 16 : 6);
-    this.prep = ease(this.prep, prepT, dt, 6);
+    this.prep = ease(this.prep, prepT, dt, prepT > this.prep ? 7 : 5);
     if (lungeT > 0.05) { this.lungeX = ease(this.lungeX, lx, dt, 12); this.lungeZ = ease(this.lungeZ, lz, dt, 12); }
     const run = this.run, lat = this.lateral, fwd = this.forward, bwd = this.backward, lunge = this.lunge;
     const ph = p.runPhase;
@@ -293,16 +237,20 @@ export class PlayerModel {
     if (swingT >= 0) {
       sampleKeys(side > 0 ? FOREHAND : BACKHAND, clamp(swingT, 0, 1), pose);
     } else {
-      // Ready, blended toward the backswing of the side the ball is on.
       sampleKeys(FOREHAND, 1, pose);
       if (this.prep > 0.01) {
         sampleKeys(this.prepSide > 0 ? FOREHAND : BACKHAND, 0, this.prepPose);
+        // While running the body cannot be fully sideways: keep the arm prepared, soften the body.
+        this.prepPose.yaw *= 1 - 0.55 * run;
+        this.prepPose.step *= 1 - run;
+        this.prepPose.wide *= 1 - run;
+        this.prepPose.knee *= 1 - 0.5 * run;
         blendPose(pose, this.prepPose, this.prep);
       }
     }
     // Reach for the ball height at contact: lower balls pull the arm and the body down.
     const h = clamp(ball.y, 0.1, 2.0);
-    const stroke = swingT >= 0 ? Math.sin(Math.PI * clamp(swingT / 0.6, 0, 1)) : 0;
+    const stroke = swingT >= 0 ? Math.sin(Math.PI * clamp(swingT / 0.62, 0, 1)) : 0;
     const lowBall = clamp((1.0 - h) / 0.9, -0.6, 1) * stroke;
     pose.E.y -= lowBall * 0.6; pose.E.normalize();
     pose.W.y -= lowBall * 0.6; pose.W.normalize();
@@ -320,27 +268,34 @@ export class PlayerModel {
     const breathe = waiting ? Math.sin(this.time * 2.2) * 0.006 : 0;
     const stanceDrop = 0.07;
     const bob = Math.abs(Math.sin(ph)) * (0.018 * fwd + 0.012 * Math.abs(lat));
-    this.hips.position.y = 0.95 - stanceDrop - run * 0.05 - lunge * 0.16 - pose.drop - lowBall * 0.08 + bob + breathe + hop - landed * 0.03;
+    const kneeDrop = pose.knee * 0.22; // bent knees lower the hips
+    this.hips.position.y = 0.95 - stanceDrop - run * 0.05 - lunge * 0.12 - pose.drop - kneeDrop - lowBall * 0.06 + bob + breathe + hop - landed * 0.03;
 
     this.torso.rotation.set(0, 0, 0);
     this.torso.rotation.y = pose.yaw * 0.45;
-    this.torso.rotation.x = -(pose.pitch + fwd * 0.2 + bwd * 0.05 + lunge * 0.15 + lowBall * 0.2);
-    this.torso.rotation.z = -lat * 0.18 - this.lungeX * lunge * 0.2;
-    // Head: stays level, eyes on the ball.
-    this.head.rotation.x = -this.torso.rotation.x * 0.85 - (ball.inPlay ? 0.35 * clamp((1.2 - h), 0, 1) : 0);
+    this.torso.rotation.x = -(pose.pitch + fwd * 0.2 + bwd * 0.05 + lunge * 0.12 + lowBall * 0.2);
+    this.torso.rotation.z = -lat * 0.18 - this.lungeX * lunge * 0.15;
+    // Head: level, eyes on the ball.
+    this.head.rotation.x = -this.torso.rotation.x * 0.85 - (ball.inPlay ? 0.4 * clamp((1.3 - h), 0, 1) : 0);
     this.head.rotation.y = ball.inPlay ? clamp(-Math.atan2(ball.x - p.x, -(ball.z - p.z) || 0.01) * 0.5 - this.facing - this.torso.rotation.y, -0.9, 0.9) : 0;
 
     // ------------------------------------------------ legs
+    const strokeSide = swingT >= 0 ? side : this.prepSide;
     for (let i = 0; i < 2; i++) {
       const { hip, knee, foot, side: ls } = this.legs[i];
       const phase = ph + (i === 0 ? 0 : Math.PI);
       const sw = Math.sin(phase);
       const lift = Math.max(0, -sw);
+      const frontFoot = ls === -strokeSide; // left foot forward for a forehand
 
       let flex = 0.28, bend = -0.55, abd = ls * 0.14;
       abd += ls * (0.1 * landed + pose.wide);
-      bend += -0.2 * landed - pose.knee;
-      foot.rotation.x = -(0.22 + 0.35 * (hop > 0 ? 1 : 0)) * (1 - lunge);
+      bend += -0.2 * landed - pose.knee * 1.1;
+      // Staggered stance: front foot toward the front wall, back foot behind with the heel up.
+      flex += frontFoot ? pose.step * 0.45 : -pose.step * 0.3;
+      foot.rotation.x = -(0.22 + 0.35 * (hop > 0 ? 1 : 0)) * (1 - lunge) - (frontFoot ? 0 : pose.step * 0.5);
+      // Knees bent -> feet flat under the body.
+      foot.rotation.x += pose.knee * 0.35 * (frontFoot ? 1 : 0.3);
 
       flex += sw * 0.6 * fwd;
       bend += -lift * 1.0 * fwd;
@@ -355,21 +310,20 @@ export class PlayerModel {
         bend += -stepOut * 0.35 * a;
       }
 
-      // Lunge. During a stroke the front leg is the one opposite the racket
-      // side (left leg for a forehand), stepping forward and across to the ball.
+      // Lunge: during a stroke the front leg is the one opposite the racket side.
       if (lunge > 0.02) {
-        const inStroke = swingT >= 0 && swingT < 0.75;
-        const front = inStroke ? ls === -side : (Math.abs(this.lungeX) > 0.35 ? Math.sign(this.lungeX) === ls : ls === -ballSide);
+        const front = inStroke ? frontFoot : (Math.abs(this.lungeX) > 0.35 ? Math.sign(this.lungeX) === ls : ls === -ballSide);
         if (front) {
-          flex = lerp(flex, 1.05 * Math.max(0.3, -this.lungeZ) + 0.2, lunge);
-          abd = lerp(abd, this.lungeX * 0.8, lunge);
+          flex = lerp(flex, 1.0 * Math.max(0.3, -this.lungeZ) + 0.25, lunge);
+          abd = lerp(abd, this.lungeX * 0.7, lunge);
           bend = lerp(bend, -1.35, lunge);
-          foot.rotation.x = lerp(foot.rotation.x, 0.25, lunge);
+          foot.rotation.x = lerp(foot.rotation.x, 0.3, lunge);
         } else {
-          flex = lerp(flex, -0.45 * Math.max(0.3, -this.lungeZ) - 0.1, lunge);
+          // Back leg: bent too during the stroke (both knees bend), straighter in a running lunge.
+          flex = lerp(flex, -0.35 * Math.max(0.3, -this.lungeZ) - 0.05, lunge);
           abd = lerp(abd, -this.lungeX * 0.15 + ls * 0.12, lunge);
-          bend = lerp(bend, -0.25, lunge);
-          foot.rotation.x = lerp(foot.rotation.x, -0.6, lunge); // back heel up
+          bend = lerp(bend, inStroke ? -0.8 : -0.25, lunge);
+          foot.rotation.x = lerp(foot.rotation.x, -0.6, lunge);
         }
       }
       hip.rotation.set(flex, 0, abd);
@@ -377,7 +331,6 @@ export class PlayerModel {
     }
 
     // ------------------------------------------------ arms
-    // Racket arm from the pose; free arm from the pose, pumping while running.
     this._poseArm(this.arms[1], pose.E, pose.W, pose.R, pose.N);
     const pump = fwd * 0.5 + bwd * 0.3;
     if (pump > 0.02 && swingT < 0 && this.prep < 0.3) {
