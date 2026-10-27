@@ -111,3 +111,17 @@ test('point pause then the next serve is set up with the ball in the server hand
   assert.ok(Math.abs(m.ball.x - hand.x) < 1e-6 && Math.abs(m.ball.z - hand.z) < 1e-6);
   assert.equal(m.ball.inPlay, false);
 });
+
+test('after a rally ends the ball keeps moving under physics', () => {
+  const rand = mulberry32(9);
+  const m = new Match({ rand, bestOf: 1 });
+  m.start(1);
+  m.serve('serve');
+  // Force a decision while the ball is in flight.
+  const before = { x: m.ball.x, z: m.ball.z };
+  m._endRally({ winner: 1, loser: 0, reason: 'tin', gameOver: false, matchOver: false });
+  assert.equal(m.state, 'point');
+  for (let i = 0; i < 30; i++) m.update(1 / 60, 0); // real = 0 so the point pause never expires
+  assert.ok(Math.hypot(m.ball.x - before.x, m.ball.z - before.z) > 0.5, 'ball travelled after the decision');
+  assert.ok(m.ball.inPlay, 'ball still in play');
+});

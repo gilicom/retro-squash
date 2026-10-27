@@ -61,7 +61,9 @@ It exposes `update(dt, real)` and emits events (`serveReady`, `serve`, `hit`,
 clock, the DOM or `Math.random` directly: a random source is injected so
 matches are reproducible (see `tests/match.test.js`).
 
-Within a rally the ball is integrated at a fixed 240 Hz (`PHYSICS.STEP`) with
+After a rally ends the ball keeps being integrated (no referee, no racket
+contact) until it dies or the next serve is set up, so a fault is still
+visible as the ball rolling out. Within a rally the ball is integrated at a fixed 240 Hz (`PHYSICS.STEP`) with
 an accumulator, independent of the frame rate. After every physics step the
 match checks whether the player whose turn it is can reach the ball and, if so,
 strikes it (`_strike`). Racket contact is therefore automatic, as in the 1984

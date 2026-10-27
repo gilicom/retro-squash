@@ -187,6 +187,7 @@ export class Match {
     const s = this.state;
     if (s === 'idle' || s === 'gameover' || s === 'matchover') {
       for (const p of this.players) p.update(dt, { resting: true });
+      this._stepFreeBall(dt);
       return;
     }
 
@@ -216,8 +217,27 @@ export class Match {
         this._stepPhysics(PHYSICS.STEP);
       }
     } else if (s === 'point') {
+      // The rally is over but the ball keeps bouncing with the same physics until it dies.
+      this._stepFreeBall(dt);
       this.timer -= real;
       if (this.timer <= 0) this._afterPoint();
+    }
+  }
+
+  /** Integrate the ball after a rally has ended: no referee, no racket contact, just physics. */
+  _stepFreeBall(dt) {
+    if (!this.ball.inPlay || this.ball.isDead()) return;
+    this.accumulator += dt;
+    while (this.accumulator >= PHYSICS.STEP) {
+      this.accumulator -= PHYSICS.STEP;
+      this.ball.step(PHYSICS.STEP, (type, info) => {
+        if (type === 'frontwall' || type === 'sidewall' || type === 'backwall') {
+          this.effects.push({ x: info.x, y: info.y, z: info.z, age: 0, life: 0.9, kind: 'mark', color: 'rgba(60,60,60,ALPHA)' });
+          this.emit('wall', { type, info });
+        } else if (type === 'floor') {
+          this.emit('floor', { info });
+        }
+      });
     }
   }
 

@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format follows
   auto-continue; a DEMO badge shows in the HUD.
 
 ### Changed
+- After a rally ends (tin, out, double bounce) the ball keeps bouncing under
+  the same physics until it dies, instead of freezing at the decision.
 - Strokes follow the court side: a ball on the left half is played as a
   backhand and on the right half as a forehand; the computer stands an arm's
   length beside the ball on that side, reach is longer there, and the backhand
