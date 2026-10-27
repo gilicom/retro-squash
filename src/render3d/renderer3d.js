@@ -17,7 +17,7 @@ import { PlayerModel } from './player3d.js';
 import { SkinnedPlayer, loadCharacter } from './skinned-player.js';
 
 /** Rigged character used for the players (Mixamo rig). Relative to the site base. */
-const CHARACTER_URL = `${import.meta.env.BASE_URL}models/Soldier.glb`;
+const CHARACTER_URL = `${import.meta.env.BASE_URL}models/Xbot.glb`;
 import { blobTexture, ringTexture } from './textures.js';
 
 const { W, L } = COURT;

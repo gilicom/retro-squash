@@ -11,7 +11,7 @@
  *   lunge  0..1 force a lunge (default: from the pose)
  *   run    0..1 running intensity (default 0)
  *   model  1 = show the rigged glTF character driven by the same solver
- *   file   character file in public/models (default Soldier.glb)
+ *   file   character file in public/models (default Xbot.glb)
  *
  * The page renders once per load (no animation loop), so it also works in
  * throttled background tabs. Call window.render(params) from the console to
@@ -54,7 +54,7 @@ scene.add(model.root);
 const qs = new URLSearchParams(location.search);
 const useModel = qs.get('model') === '1';
 const ready = useModel
-  ? loadCharacter('/models/' + (qs.get('file') || 'Soldier.glb')).then((gltf) => { scene.remove(model.root); model = new SkinnedPlayer(gltf, 0x2f7df6); scene.add(model.root); })
+  ? loadCharacter('/models/' + (qs.get('file') || 'Xbot.glb')).then((gltf) => { scene.remove(model.root); model = new SkinnedPlayer(gltf, 0x2f7df6); scene.add(model.root); })
   : Promise.resolve();
 const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffffff }));
 scene.add(ballMesh);
