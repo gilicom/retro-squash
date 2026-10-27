@@ -22,3 +22,7 @@ Thumbs.db
 
 # Reference photos used for animation (not redistributed)
 ref/
+
+# Blender working files (large binaries)
+tools/blender/*.blend
+tools/blender/*.blend1

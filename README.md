@@ -105,7 +105,8 @@ JSDoc with units (metres, seconds, m/s).
 
 The players are rigged glTF characters on the Mixamo skeleton, driven by the
 game's own procedural animation (footsteps, lunge, strokes). The bundled
-character is the three.js **Xbot** sports mannequin, tinted per team. For realistic players,
+player was built in Blender with MPFB (MakeHuman) from the design brief in
+`docs/design/`; the three.js **Xbot** mannequin is the fallback. For realistic players,
 export any character from [Mixamo](https://www.mixamo.com) (T-pose, FBX →
 glTF/GLB) or [Ready Player Me](https://readyplayer.me), place it in
 `public/models/` and set `CHARACTER_URL` in `src/render3d/renderer3d.js`;

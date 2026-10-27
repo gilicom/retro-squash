@@ -16,8 +16,10 @@ import { PlayerModel } from './player3d.js';
 import { SkinnedPlayer, loadCharacter } from './skinned-player.js';
 import { loadRacketModel } from './racket-model.js';
 
-/** Rigged character used for the players (Mixamo rig). Relative to the site base. */
-const CHARACTER_URL = `${import.meta.env.BASE_URL}models/Xbot.glb`;
+/** Rigged character used for the players (Mixamo rig), built in Blender from docs/design/character-brief.md. */
+const CHARACTER_URL = `${import.meta.env.BASE_URL}models/player.glb`;
+/** Fallback when the player model is missing. */
+const FALLBACK_CHARACTER_URL = `${import.meta.env.BASE_URL}models/Xbot.glb`;
 /** Racket built in Blender (docs/design); the procedural racket is the fallback. */
 const RACKET_URL = `${import.meta.env.BASE_URL}models/racket.glb`;
 import { blobTexture, ringTexture } from './textures.js';
@@ -55,8 +57,8 @@ export class Renderer3D {
     ];
     for (const m of this.models) this.scene.add(m.root);
     this.characterReady = false;
-    Promise.all([loadRacketModel(RACKET_URL), loadCharacter(CHARACTER_URL)]).then(([, gltf]) => {
-      const looks = [{ number: 7 }, { number: 3 }];
+    Promise.all([loadRacketModel(RACKET_URL), loadCharacter(CHARACTER_URL).catch(() => loadCharacter(FALLBACK_CHARACTER_URL))]).then(([, gltf]) => {
+      const looks = [{ number: 7, hair: 0x3b2a1e }, { number: 3, hair: 0x120d0a }];
       const colors = [0x2f7df6, 0xe5483c];
       const skinned = colors.map((c, i) => new SkinnedPlayer(gltf, c, looks[i]));
       for (const m of this.models) this.scene.remove(m.root);

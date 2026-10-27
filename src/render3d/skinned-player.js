@@ -120,8 +120,11 @@ export class SkinnedPlayer {
     this.restWorld = {};
     for (const n of Object.keys(this.rest)) this.restWorld[n] = b[n].getWorldQuaternion(new THREE.Quaternion());
 
-    // Team tint on the character's materials (cloned so the two players differ).
+    // Team colour. A dressed character (kit with vertex colours) keeps its skin,
+    // hair and eyes and only swaps the kit's accent (lime in the Blender build)
+    // for the team colour; an untextured mannequin is tinted as a whole.
     const tint = new THREE.Color(color);
+    const dressed = (() => { let d = false; this.root.traverse((o) => { if (o.isMesh && o.geometry.attributes.color) d = true; }); return d; })();
     this.root.traverse((o) => {
       if (!o.isMesh) return;
       o.castShadow = true;
@@ -130,10 +133,24 @@ export class SkinnedPlayer {
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       const cloned = mats.map((m) => {
         const c = m.clone();
-        c.color.copy(tint).lerp(new THREE.Color(0xffffff), m.map ? 0.72 : 0.35);
+        if (!dressed) c.color.copy(tint).lerp(new THREE.Color(0xffffff), m.map ? 0.72 : 0.35);
+        else if (/hair/i.test(m.name) && look.hair !== undefined) c.color.set(look.hair);
         return c;
       });
       o.material = Array.isArray(o.material) ? cloned : cloned[0];
+      const col = o.geometry.attributes.color;
+      if (dressed && col) {
+        // Own copy of the geometry so the two players can differ, then recolour the accent.
+        o.geometry = o.geometry.clone();
+        const attr = o.geometry.attributes.color;
+        const lime = new THREE.Color(0.55, 1.0, 0.08);
+        for (let i = 0; i < attr.count; i++) {
+          const r = attr.getX(i), g = attr.getY(i), bl = attr.getZ(i);
+          if (g > 0.6 && r < 0.9 && bl < 0.35 && g > r) { attr.setXYZ(i, tint.r, tint.g, tint.b); }
+        }
+        attr.needsUpdate = true;
+        void lime;
+      }
     });
 
     // Fingers: curl the racket hand around the grip, relax the free hand.

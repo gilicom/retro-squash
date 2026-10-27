@@ -165,15 +165,31 @@ The racket hangs from the right hand bone with the correction that makes
 its world orientation equal the solver's hand (handle along the forearm,
 strings facing the solver's palm normal).
 
-Any character on the Mixamo rig works: drop a glTF/GLB into
-`public/models/` and point `CHARACTER_URL` in `renderer3d.js` at it.
-Bundled: **Xbot** (three.js examples, a neutral sports mannequin, tinted in
-the team colour). Textured characters get a light team tint, untextured
-ones a strong one. A Mixamo athlete export gives a proper squash player with
-sports clothing; the three.js Soldier was tried and works but does not
-belong on a squash court. If the file is missing or fails to
-load, the procedural bodies stay. (Ready Player Me's avatar CDN,
-models.readyplayer.me, no longer resolves, so it is not an option.)
+**The player** (`public/models/player.glb`, 2 MB) was built in Blender
+through the MCP connection from `docs/design/character-brief.md`:
+
+- Body: MPFB (MakeHuman for Blender) base mesh, macros gender 1.0, age 0.45,
+  muscle 0.8, weight 0.5, height 0.62, proportions 0.7; shape keys baked into
+  the mesh (so the GLB carries no morph targets); MPFB's `mixamo` rig with
+  weights (`mixamorig:*` bones, A-pose); the procedural v2 skin baked to a
+  2048 px diffuse texture with Cycles and exported through a plain
+  Principled material (JPEG in the GLB).
+- Kit: shirt, shorts, socks and shoes are extracted from the body's own
+  faces by height/width rules, offset along the vertex normals and given a
+  Solidify thickness, so they fit exactly and share the body's weights;
+  colours are **vertex colours** (black kit, lime piping on the shoulders,
+  side seams, a chest patch, a shorts stripe, a sock ring, a shoe stripe).
+  Hair is a solidified cap of scalp faces; eyes are MakeHuman's eye helper
+  spheres with small iris spheres; headband and wristbands are tori weighted
+  to the head and hand bones.
+- Team colour: the renderer recolours the lime vertices (hue test) to the
+  team colour per player and sets the hair colour, leaving skin and eyes
+  alone. The Xbot mannequin is the fallback and is tinted as a whole.
+
+The Blender scene is kept in `tools/blender/squash-assets.blend`
+(git-ignored, large) for further work. Any other Mixamo-rig character can
+replace the player: drop a GLB into `public/models/` and point
+`CHARACTER_URL` at it. (Ready Player Me's avatar CDN no longer resolves.)
 
 ### Ball and effects (`renderer3d.js`)
 

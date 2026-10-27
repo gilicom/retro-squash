@@ -22,6 +22,10 @@ All notable changes to this project are documented here. The format follows
   `model=1` shows the rigged character.
 
 ### Added (assets)
+- Player character built in Blender through the MCP connection: MPFB athletic
+  body with a Mixamo rig and a baked skin texture, kit extracted from the body
+  (shirt, shorts, socks, shoes with vertex-colour accents), hair cap, eyes,
+  headband and wristbands; team colour swaps the accent per player.
 - Racket modelled in Blender (`public/models/racket.glb`), loaded and tinted
   per player; the procedural racket remains the fallback.
 
