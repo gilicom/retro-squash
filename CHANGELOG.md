@@ -9,7 +9,16 @@ All notable changes to this project are documented here. The format follows
 ### Added
 - `npm run deploy` publishes the build to GitHub Pages; live at https://gilicom.github.io/retro-squash/.
 
+### Added (later)
+- Demo mode: "Watch a demo" plays computer vs computer with auto-serve and
+  auto-continue; a DEMO badge shows in the HUD.
+
 ### Changed
+- Real footsteps: feet are planted on the floor and only move by stepping
+  (swing arcs sized by speed), legs solved by two-bone IK; stances and lunges
+  are real steps too. Feet no longer slide.
+- The body follows the ball: hips turn toward the stroke's side wall while
+  moving to the ball and half-turn to the ball between shots.
 - Player animation rebuilt around real squash movement: low ready stance on the
   toes, a single split step timed to the opponent's contact, side shuffles,
   short quiet running strides, backpedalling, a deep lunge into the ball and a

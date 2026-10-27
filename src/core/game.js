@@ -14,7 +14,12 @@ import { Renderer } from '../render/renderer.js';
 import { Renderer3D } from '../render3d/renderer3d.js';
 import { Input } from '../input/input.js';
 import { Sound } from '../audio/sound.js';
-import { PACE } from '../config/difficulty.js';
+import { PACE, DIFFICULTY, HUMAN } from '../config/difficulty.js';
+import { AIController } from '../entities/ai.js';
+
+/** Seconds a demo waits before serving and before continuing after a game. */
+const DEMO_SERVE_DELAY = 1.2;
+const DEMO_CONTINUE_DELAY = 2.5;
 
 export class Game {
   /**
@@ -44,6 +49,11 @@ export class Game {
 
     /** 'menu' | 'paused' | 'play' (the match state applies) */
     this.mode = 'menu';
+    /** Demo: a bot plays the human's part so both sides are computer controlled. */
+    this.demo = false;
+    this.demoBot = null;
+    this.demoTimer = 0;
+    this.demoContinue = null;
     this.lastTime = 0;
     this.staminaHudTimer = 0;
 
@@ -70,7 +80,8 @@ export class Game {
     const ui = this.ui;
     m.on('serveReady', ({ server }) => {
       ui.updateScore(m.referee.getScore());
-      ui.message(ui.t(server === 0 ? 'yourServe' : 'cpuServe'));
+      ui.message(this.demo ? '' : ui.t(server === 0 ? 'yourServe' : 'cpuServe'));
+      this.demoTimer = DEMO_SERVE_DELAY;
     });
     m.on('serve', ({ shot }) => { this.sound.racket(shot.speed); ui.message(''); });
     m.on('hit', ({ shot }) => this.sound.racket(shot.speed));
@@ -87,13 +98,22 @@ export class Game {
       if (decision.winner === 0) this.sound.fanfare();
       ui.message('');
       ui.showGameOver(ui.t('gameTo', { who: ui.t(decision.winner === 0 ? 'you' : 'cpu') }), games, ui.t('nextGame'), () => m.nextGame());
+      this._demoAutoContinue(() => { ui.hideGameOver(); m.nextGame(); });
     });
     m.on('matchOver', ({ decision, score }) => {
       const games = `${ui.t('games')} ${score.games[0]} - ${score.games[1]}`;
       if (decision.winner === 0) this.sound.fanfare();
       ui.message('');
       ui.showGameOver(ui.t(decision.winner === 0 ? 'matchWon' : 'matchLost'), games, ui.t('newMatch'), () => this.startMatch());
+      this._demoAutoContinue(() => { ui.hideGameOver(); this.startMatch(); });
     });
+  }
+
+  /** In demo mode, continue automatically after a short pause. */
+  _demoAutoContinue(fn) {
+    if (!this.demo) return;
+    this.demoTimer = DEMO_CONTINUE_DELAY;
+    this.demoContinue = fn;
   }
 
   // --------------------------------------------------------------- renderer
@@ -145,7 +165,24 @@ export class Game {
     this.match.autoT = this.settings.autoT;
     this.mode = 'play';
     this.ui.showHud();
+    this.ui.setDemo(this.demo);
     this.match.start(this.settings.bestOf);
+  }
+
+  /** Start a match in which a bot plays the human's part (both sides computer controlled). */
+  startDemo() {
+    this.demo = true;
+    const d = DIFFICULTY[this.settings.difficulty];
+    this.demoBot = new AIController(this.match.human, { ...d, speed: HUMAN.speed, reach: HUMAN.reach, fitness: HUMAN.fitness });
+    this.startMatch();
+  }
+
+  /** Leave demo mode (the next match is played by the user). */
+  stopDemo() {
+    this.demo = false;
+    this.demoBot = null;
+    this.demoContinue = null;
+    this.ui.setDemo(false);
   }
 
   pause() {
@@ -165,6 +202,7 @@ export class Game {
 
   toMenu() {
     this.mode = 'menu';
+    this.stopDemo();
     this.ui.showMenu();
     this.ui.message('');
   }
@@ -201,13 +239,31 @@ export class Game {
       for (const p of this.match.players) p.update(dt, { resting: true });
       return;
     }
-    this._controlHuman(dt);
+    if (this.demo) this._controlDemo(dt, real); else this._controlHuman(dt);
     this.match.update(dt, real);
 
     this.staminaHudTimer -= real;
     if (this.staminaHudTimer <= 0) {
       this.staminaHudTimer = 0.1;
       this.ui.updateStamina(this.match.human.stamina, this.match.cpu.stamina);
+    }
+  }
+
+  /** Demo: the bot moves the human, serves after a pause and continues after a game. */
+  _controlDemo(dt, real) {
+    const m = this.match;
+    const inp = this.input;
+    inp.takeDrag();
+    inp.pointerTarget = null;
+    if (m.state === 'rally') {
+      this.demoBot.update(dt, m.ball, m.referee, m.cpu);
+      m.returnToT = false;
+    } else if (m.state === 'serve' && m.referee.server === 0) {
+      this.demoTimer -= dt;
+      if (this.demoTimer <= 0) m.serve(Math.random() < 0.3 ? 'lobServe' : 'serve');
+    } else if ((m.state === 'gameover' || m.state === 'matchover') && this.demoContinue) {
+      this.demoTimer -= real;
+      if (this.demoTimer <= 0) { const fn = this.demoContinue; this.demoContinue = null; fn(); }
     }
   }
 
@@ -240,7 +296,7 @@ export class Game {
       if (this.mode === 'paused') this.resume(); else this.pause();
       return;
     }
-    if (this.mode !== 'play') return;
+    if (this.mode !== 'play' || this.demo) return;
     if (a === 'primary') this.match.arm('smash');
     else if (a === 'lob') this.match.arm('lob');
     else if (a === 'drop') this.match.arm('drop');

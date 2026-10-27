@@ -66,6 +66,8 @@ const STRINGS = {
     classic: 'Classic',
     autoT: 'Return to T',
     stamina: 'STAMINA',
+    demo: 'Watch a demo (computer vs computer)',
+    demoBadge: 'DEMO',
     staminaHelp: 'Stamina: running drains the bar and a tired player is slower and less accurate. Standing on the T (the yellow ring) recovers fastest. With "Return to T" on, you jog back to the T after every shot until you move.',
   },
   he: {
@@ -128,6 +130,8 @@ const STRINGS = {
     classic: 'קלאסי',
     autoT: 'חזרה ל-T',
     stamina: 'סטמינה',
+    demo: 'צפה בהדגמה (מחשב נגד מחשב)',
+    demoBadge: 'הדגמה',
     staminaHelp: 'סטמינה: ריצה מרוקנת את המד, ושחקן עייף איטי ופחות מדויק. עמידה על ה-T (הטבעת הצהובה) ממלאת הכי מהר. כש"חזרה ל-T" פועל, אחרי כל חבטה אתה חוזר ל-T עד שתזיז שוב.',
   },
 };

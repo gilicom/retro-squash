@@ -21,7 +21,7 @@ export class UI {
   /**
    * @param {Document} doc
    * @param {Settings} settings
-   * @param {{onPlay:Function,onResume:Function,onRestart:Function,onMenu:Function,onAction:(a:string)=>void,onSettings:(s:Settings)=>void}} cb
+   * @param {{onPlay:Function,onDemo:Function,onResume:Function,onRestart:Function,onMenu:Function,onAction:(a:string)=>void,onSettings:(s:Settings)=>void}} cb
    */
   constructor(doc, settings, cb) {
     this.doc = doc;
@@ -37,6 +37,7 @@ export class UI {
   _build() {
     const $ = this.$;
     $('btnPlay').addEventListener('click', () => this.cb.onPlay());
+    $('btnDemo').addEventListener('click', () => this.cb.onDemo());
     $('btnResume').addEventListener('click', () => this.cb.onResume());
     $('btnRestart').addEventListener('click', () => this.cb.onRestart());
     $('btnMenu').addEventListener('click', () => this.cb.onMenu());
@@ -100,6 +101,16 @@ export class UI {
 
   showPause(on) {
     this._show('pause', on);
+  }
+
+  hideGameOver() {
+    this._show('gameover', false);
+  }
+
+  /** Show or hide the demo badge in the HUD. */
+  setDemo(on) {
+    this._show('demoBadge', on);
+    this.doc.body.classList.toggle('demo', on);
   }
 
   /**

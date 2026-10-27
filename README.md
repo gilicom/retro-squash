@@ -15,6 +15,7 @@ opponent that reads the ball, and controls for both desktop and touch screens.
   point-a-rally to 11, win by 2, best of 1 / 3 / 5.
 - **Stamina and the T**: running drains a bar; standing on the T refills it.
   "Return to T" jogs you back after every shot until you move.
+- **Demo mode**: watch computer vs computer from the menu.
 - **No build step required to run**; Vite is used for the dev server and bundling.
 - **Play it now**: https://gilicom.github.io/retro-squash/ (works on phones; add to home screen for full screen).
 

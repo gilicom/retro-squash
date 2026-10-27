@@ -46,6 +46,13 @@ Hit the ball on the outside of your body to angle it across court; move into it
 to add angle; let it come to your centre for a straight drive. Awkward contacts
 (stretching, scraping, running, ball behind you) add error — see PHYSICS.md.
 
+## Demo
+
+*Watch a demo* in the menu starts a match in which a bot of the selected
+difficulty plays the human's part, so both sides are computer controlled.
+It serves and continues between games by itself; only pause and the menu
+respond. *Play* leaves demo mode.
+
 ## Return to T
 
 With the assist on (menu), the player jogs back to the T after every shot

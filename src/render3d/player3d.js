@@ -2,28 +2,29 @@
  * @module render3d/player3d
  * Procedural player animation on the rig from {@link module:render3d/body3d}.
  *
- * Movement poses follow coaching material (docs/RENDERING.md). Stroke poses
- * come from reference frames of a forehand (kept out of the repository):
- *   1. preparation while moving to the ball: body turned to the side wall,
- *      front foot (left for a forehand) toward the front wall, elbow at
- *      shoulder height, racket head straight up above the shoulder, free hand
- *      pointing at the ball;
- *   2. contact: both knees bent deep, body low and bent ~45° over the front
- *      foot, arm extended to the ball at ankle height, racket level, free arm
- *      trailing behind;
- *   3. follow-through: shoulders rotate to the front wall, racket comes up
- *      high on the opposite side with the elbow bent, weight on the front foot.
- * The backhand mirrors the set, with the racket prepared on the other side.
+ * Legs: real footsteps. Each foot is planted at a fixed point on the floor.
+ * When the body moves away from where that foot should be (its rest position
+ * under the hips, led ahead by the velocity), the foot lifts, swings in an
+ * arc to the new spot and plants again; the legs are then solved with
+ * two-bone IK from the hip height to the planted foot, so feet never slide.
+ * Stances (staggered preparation, lunge) are expressed as foot targets, so
+ * stepping into a lunge is a real step too.
  *
- * Arms are posed with direction vectors in the torso's yaw frame (where the
- * elbow and wrist should be and where the racket points), compensated for
- * the torso's forward lean, so poses can be read straight off a photograph.
+ * Strokes come from reference frames (kept out of the repository):
+ *   1. preparation: hips 90° to the side wall, front foot forward, elbow at
+ *      shoulder height, racket head straight up, free hand pointing at the ball;
+ *   2. contact: both knees bent deep, body over the front foot, arm extended
+ *      to the ball, racket level; free arm trailing;
+ *   3. follow-through: body rotates to the front wall, racket up high on the
+ *      opposite side. The backhand mirrors it with its own preparation.
+ * Arms are posed with direction vectors in the torso's yaw frame, compensated
+ * for the forward lean. Volleys are played taller with the arm at shoulder height.
  *
  * Model frame: faces -z (toward the front wall); +x is the player's right.
  * root.rotation.y < 0 turns the body toward the right side wall.
  */
 import * as THREE from 'three';
-import { buildBody } from './body3d.js';
+import { buildBody, THIGH, SHIN } from './body3d.js';
 import { buildRacket } from './racket3d.js';
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -38,13 +39,19 @@ const nlerp = (a, b, t, out) => out.copy(a).lerp(b, t).normalize();
 const VEC_KEYS = ['E', 'W', 'R', 'N', 'LE', 'LW'];
 const NUM_KEYS = ['yaw', 'shoulders', 'pitch', 'drop', 'wide', 'knee', 'step'];
 
+/** Hip joint lateral offset and foot stance half-width (m). */
+const HIP_X = 0.1;
+const STANCE_HALF = 0.14;
+/** Ankle height above the floor when the foot is flat (m). */
+const ANKLE = 0.035;
+
 /**
  * Stroke keyframes (forehand, right-handed). Torso yaw frame: x right, y up,
  * z back (-z toward the front wall).
  *   E elbow dir from shoulder, W wrist dir from elbow, R racket dir, N string normal,
  *   LE/LW free arm, yaw hip turn (negative = right wall; the body faces the side wall
  *   at 90° for the stroke), shoulders extra shoulder turn beyond the hips, pitch forward lean,
- *   drop hip drop (m), wide extra foot spread, knee extra bend (both knees),
+ *   drop hip drop (m), wide extra foot spread, knee extra bend (both knees, lowers the hips),
  *   step front-foot-forward amount (front foot = opposite the racket side).
  */
 const FOREHAND = [
@@ -133,6 +140,14 @@ export class PlayerModel {
     this.time = 0;
     this.pose = makePose();
     this.prepPose = makePose();
+
+    // Footstep state per leg (world space, on the floor).
+    this.feet = this.legs.map(() => ({
+      planted: new THREE.Vector3(NaN, 0, NaN), from: new THREE.Vector3(), to: new THREE.Vector3(),
+      swing: -1, duration: 0.25, lift: 0.06, pos: new THREE.Vector3(),
+    }));
+    this.prevRoot = new THREE.Vector3(NaN, 0, NaN);
+
     this._q = new THREE.Quaternion();
     this._q2 = new THREE.Quaternion();
     this._m = new THREE.Matrix4();
@@ -141,6 +156,9 @@ export class PlayerModel {
     this._z = new THREE.Vector3();
     this._ax = new THREE.Vector3(1, 0, 0);
     this._e = new THREE.Vector3(); this._w = new THREE.Vector3(); this._r = new THREE.Vector3(); this._n = new THREE.Vector3();
+    this._fwd = new THREE.Vector3(); this._right = new THREE.Vector3();
+    this._rest = [new THREE.Vector3(), new THREE.Vector3()];
+    this._tmp = new THREE.Vector3(); this._tmp2 = new THREE.Vector3(); this._tmp3 = new THREE.Vector3();
   }
 
   _dirQuat(dir, out) {
@@ -173,6 +191,35 @@ export class PlayerModel {
   }
 
   /**
+   * Two-bone leg IK in root-local space: point the thigh and shin so the
+   * ankle reaches `foot` (root-local), knee bending forward. The foot stays
+   * flat and pointing forward, tilted by `toe` (radians, positive = toes down).
+   */
+  _poseLeg(leg, hipLocal, foot, toe) {
+    const d = this._tmp.subVectors(foot, hipLocal);
+    let L = d.length();
+    if (L < 1e-4) { L = 1e-4; d.set(0, -1e-4, 0); }
+    const reach = clamp(L, 0.2, THIGH + SHIN - 0.01);
+    const dn = this._tmp2.copy(d).divideScalar(L);
+    // Knee angle from the law of cosines; the thigh deviates from the hip->ankle line by alpha, toward the front.
+    const a = THIGH, b = SHIN;
+    const cosAlpha = clamp((a * a + reach * reach - b * b) / (2 * a * reach), -1, 1);
+    const alpha = Math.acos(cosAlpha);
+    const f = this._tmp3.set(0, 0, -1); // knee points forward
+    const n = f.addScaledVector(dn, -f.dot(dn)).normalize();
+    const thighDir = this._x.copy(dn).multiplyScalar(Math.cos(alpha)).addScaledVector(n, Math.sin(alpha)).normalize();
+    const qH = this._dirQuat(thighDir, leg.hip.quaternion);
+    // Shin: from the knee to the ankle.
+    const kneePos = this._y.copy(hipLocal).addScaledVector(thighDir, a);
+    const shinDir = this._z.subVectors(foot, kneePos).normalize();
+    const qK = this._dirQuat(shinDir, this._q);
+    leg.knee.quaternion.copy(qH).invert().multiply(qK);
+    // Foot flat in the root frame, plus toe tilt.
+    leg.foot.quaternion.copy(qK).invert();
+    if (toe) leg.foot.rotateX(-toe);
+  }
+
+  /**
    * Pose the model from the simulation state.
    * @param {import('../entities/player.js').Player} p
    * @param {{x:number,y:number,z:number,inPlay?:boolean}} ball
@@ -182,7 +229,10 @@ export class PlayerModel {
    */
   update(p, ball, dt, opponent, myTurn = true) {
     const r = this.root;
+    // Teleport (new rally): reset the feet under the body.
+    const jumped = !Number.isFinite(this.prevRoot.x) || Math.hypot(p.x - this.prevRoot.x, p.z - this.prevRoot.z) > 1.5;
     r.position.set(p.x, 0, p.z);
+    this.prevRoot.set(p.x, 0, p.z);
     this.time += dt;
 
     // Split step: one small fast hop the instant the opponent strikes.
@@ -216,7 +266,6 @@ export class PlayerModel {
     if (inStroke) {
       const reach = clamp(Math.abs(ball.x - p.x) / Math.max(0.3, p.reach), 0, 1);
       const bell = Math.sin(Math.PI * clamp(swingT / 0.75, 0, 1));
-      // Little lunge in the preparation (the stance is set by the keyframe), full lunge into contact.
       const l = (0.35 + 0.65 * reach) * Math.min(1, 0.1 + bell * 1.2);
       if (l > lungeT) { lungeT = l; lx = side * 0.6; lz = -0.8; }
     }
@@ -234,7 +283,6 @@ export class PlayerModel {
     this.prep = ease(this.prep, prepT, dt, prepT > this.prep ? 7 : 5);
     if (lungeT > 0.05) { this.lungeX = ease(this.lungeX, lx, dt, 12); this.lungeZ = ease(this.lungeZ, lz, dt, 12); }
     const run = this.run, lat = this.lateral, fwd = this.forward, bwd = this.backward, lunge = this.lunge;
-    const ph = p.runPhase;
 
     // ------------------------------------------------ stroke pose
     const pose = this.pose;
@@ -245,106 +293,141 @@ export class PlayerModel {
       if (this.prep > 0.01) {
         sampleKeys(this.prepSide > 0 ? FOREHAND : BACKHAND, 0, this.prepPose);
         // While running the body cannot be fully sideways: keep the arm prepared, soften the body.
-        this.prepPose.yaw *= 1 - 0.6 * run;
-        this.prepPose.shoulders *= 1 - 0.6 * run;
+        // The body turns toward the side wall already while moving to the ball.
+        this.prepPose.yaw *= 1 - 0.3 * run;
+        this.prepPose.shoulders *= 1 - 0.3 * run;
         this.prepPose.step *= 1 - run;
         this.prepPose.wide *= 1 - run;
         this.prepPose.knee *= 1 - 0.5 * run;
         blendPose(pose, this.prepPose, this.prep);
       }
     }
-    // Reach for the ball height at contact: low balls pull the arm and the body down,
+    // Ball height at contact: low balls pull the arm and the body down,
     // high balls (volleys) bring the extended arm up to shoulder height with the body upright.
     const h = clamp(ball.y, 0.1, 2.0);
     const stroke = swingT >= 0 ? Math.sin(Math.PI * clamp(swingT / 0.62, 0, 1)) : 0;
-    const lowBall = clamp((1.0 - h) / 0.9, 0, 1) * stroke;    // 1 = ball on the floor
-    const highBall = clamp((h - 1.0) / 0.6, 0, 1) * stroke;   // 1 = head-high volley
+    const lowBall = clamp((1.0 - h) / 0.9, 0, 1) * stroke;
+    const highBall = clamp((h - 1.0) / 0.6, 0, 1) * stroke;
     pose.E.y += highBall * 0.8 - lowBall * 0.6; pose.E.normalize();
     pose.W.y += highBall * 0.95 - lowBall * 0.6; pose.W.normalize();
     pose.R.y += highBall * 0.35 - lowBall * 0.25; pose.R.normalize();
-    // A volley is played standing taller.
     const tall = 1 - 0.6 * highBall;
     pose.pitch *= tall; pose.drop *= tall; pose.knee *= tall;
 
-    // ------------------------------------------------ facing and body height
+    // ------------------------------------------------ facing
+    // Body orientation: the body follows the ball. When it is our ball the stroke
+    // pose turns the hips to the side wall; otherwise the body half-turns toward
+    // the ball (the head completes the turn) and leans into the run direction.
+    const yawToBall = Math.atan2(-(ball.x - p.x), -(ball.z - p.z));
     let face = 0;
     if (bwd > 0.1) face = -Math.sign(dirX || 1) * 0.5 * bwd;
     if (fwd > 0.1) face += -dirX * 0.25 * fwd;
-    face += pose.yaw;
+    if (ball.inPlay) {
+      const follow = clamp(yawToBall, -1.3, 1.3) * 0.6;
+      face = lerp(face + follow, face + pose.yaw, clamp(Math.max(this.prep, swingT >= 0 ? 1 : 0), 0, 1));
+    } else {
+      face += pose.yaw;
+    }
     this.facing = ease(this.facing, face, dt, 9);
     r.rotation.y = this.facing;
+    const fwdW = this._fwd.set(-Math.sin(this.facing), 0, -Math.cos(this.facing));   // body forward, world
+    const rightW = this._right.set(Math.cos(this.facing), 0, -Math.sin(this.facing)); // body right, world
 
+    // ------------------------------------------------ footsteps
+    const strokeSide = swingT >= 0 ? side : this.prepSide;
+    const stepLead = 0.12; // seconds of velocity the rest position leads the body by
+    for (let i = 0; i < 2; i++) {
+      const ls = this.legs[i].side;
+      const frontFoot = ls === -strokeSide;
+      // Rest position: under the hip, spread by the stance, staggered by the pose, pushed by a lunge, led by velocity.
+      let lateral = ls * (STANCE_HALF + pose.wide + 0.08 * landed);
+      let ahead = frontFoot ? pose.step * 0.42 : -pose.step * 0.3;
+      if (lunge > 0.02) {
+        const front = inStroke ? frontFoot : (Math.abs(this.lungeX) > 0.35 ? Math.sign(this.lungeX) === ls : ls === -ballSide);
+        // Lunge direction (world) expressed in body space.
+        const lxB = this.lungeX * Math.cos(this.facing) - this.lungeZ * Math.sin(this.facing);
+        const lzB = -(this.lungeX * Math.sin(this.facing) + this.lungeZ * Math.cos(this.facing));
+        if (front) { lateral += lxB * 0.55 * lunge; ahead = lerp(ahead, lzB * 0.65, lunge); }
+        else { lateral -= lxB * 0.1 * lunge; ahead = lerp(ahead, -lzB * 0.25 - 0.1, lunge); }
+      }
+      const rest = this._rest[i].copy(r.position).addScaledVector(rightW, lateral).addScaledVector(fwdW, ahead);
+      rest.x += p.vx * stepLead; rest.z += p.vz * stepLead;
+      rest.y = 0;
+    }
+    for (let i = 0; i < 2; i++) {
+      const ft = this.feet[i];
+      const ot = this.feet[1 - i];
+      const rest = this._rest[i];
+      if (jumped || !Number.isFinite(ft.planted.x)) { ft.planted.copy(rest); ft.swing = -1; }
+      if (ft.swing >= 0) {
+        ft.swing += dt / ft.duration;
+        if (ft.swing >= 1) { ft.swing = -1; ft.planted.copy(ft.to); }
+      }
+      if (ft.swing < 0 && ot.swing < 0) {
+        const dist = Math.hypot(ft.planted.x - rest.x, ft.planted.z - rest.z);
+        const otherRest = this._rest[1 - i];
+        const otherDist = Math.hypot(ot.planted.x - otherRest.x, ot.planted.z - otherRest.z);
+        const threshold = 0.14 + 0.08 * Math.min(speed, 4);
+        if (dist > threshold && dist >= otherDist - 0.02) {
+          ft.swing = 0;
+          ft.from.copy(ft.planted);
+          ft.to.copy(rest).addScaledVector(this._tmp.set(p.vx, 0, p.vz), 0.06);
+          ft.duration = clamp(0.3 - 0.035 * speed, 0.14, 0.3);
+          ft.lift = 0.04 + 0.03 * Math.min(speed, 4) + 0.05 * lunge;
+        }
+      }
+      if (ft.swing >= 0) {
+        const u = smooth(ft.swing);
+        ft.pos.lerpVectors(ft.from, ft.to, u);
+        ft.pos.y = Math.sin(Math.PI * ft.swing) * ft.lift;
+      } else {
+        ft.pos.copy(ft.planted);
+        ft.pos.y = 0;
+      }
+    }
+    const swingMax = Math.max(this.feet[0].swing, this.feet[1].swing);
+    const stepBob = swingMax >= 0 ? Math.sin(Math.PI * swingMax) * 0.012 * (0.5 + run) : 0;
+
+    // ------------------------------------------------ body height and torso
     const waiting = ball.inPlay && swingT < 0 && run < 0.15;
     const breathe = waiting ? Math.sin(this.time * 2.2) * 0.006 : 0;
     const stanceDrop = 0.07;
-    const bob = Math.abs(Math.sin(ph)) * (0.018 * fwd + 0.012 * Math.abs(lat));
-    const kneeDrop = pose.knee * 0.22; // bent knees lower the hips
-    this.hips.position.y = 0.95 - stanceDrop - run * 0.05 - lunge * 0.12 - pose.drop - kneeDrop - lowBall * 0.06 + bob + breathe + hop - landed * 0.03;
+    const kneeDrop = pose.knee * 0.22;
+    // Lower the hips when the feet are far apart so the legs can reach (lunge).
+    const spread = Math.hypot(this.feet[0].pos.x - this.feet[1].pos.x, this.feet[0].pos.z - this.feet[1].pos.z);
+    const spreadDrop = clamp((spread - 0.5) * 0.35, 0, 0.22);
+    this.hips.position.y = 0.95 - stanceDrop - run * 0.04 - pose.drop - kneeDrop - spreadDrop - lowBall * 0.05 + stepBob + breathe + hop - landed * 0.03;
 
     this.torso.rotation.set(0, 0, 0);
     this.torso.rotation.y = pose.shoulders;
     this.torso.rotation.x = -(pose.pitch + fwd * 0.2 + bwd * 0.05 + lunge * 0.12 + lowBall * 0.2);
     this.torso.rotation.z = -lat * 0.18 - this.lungeX * lunge * 0.15;
-    // Head: level, eyes on the ball.
     this.head.rotation.x = -this.torso.rotation.x * 0.85 - (ball.inPlay ? 0.4 * clamp((1.3 - h), 0, 1) : 0);
     this.head.rotation.y = ball.inPlay ? clamp(-Math.atan2(ball.x - p.x, -(ball.z - p.z) || 0.01) * 0.5 - this.facing - this.torso.rotation.y, -0.9, 0.9) : 0;
 
-    // ------------------------------------------------ legs
-    const strokeSide = swingT >= 0 ? side : this.prepSide;
+    // ------------------------------------------------ legs (IK to the feet)
+    const cosF = Math.cos(this.facing), sinF = Math.sin(this.facing);
     for (let i = 0; i < 2; i++) {
-      const { hip, knee, foot, side: ls } = this.legs[i];
-      const phase = ph + (i === 0 ? 0 : Math.PI);
-      const sw = Math.sin(phase);
-      const lift = Math.max(0, -sw);
-      const frontFoot = ls === -strokeSide; // left foot forward for a forehand
-
-      let flex = 0.28, bend = -0.55, abd = ls * 0.14;
-      abd += ls * (0.1 * landed + pose.wide);
-      bend += -0.2 * landed - pose.knee * 1.1;
-      // Staggered stance: front foot toward the front wall, back foot behind with the heel up.
-      flex += frontFoot ? pose.step * 0.45 : -pose.step * 0.3;
-      foot.rotation.x = -(0.22 + 0.35 * (hop > 0 ? 1 : 0)) * (1 - lunge) - (frontFoot ? 0 : pose.step * 0.5);
-      // Knees bent -> feet flat under the body.
-      foot.rotation.x += pose.knee * 0.35 * (frontFoot ? 1 : 0.3);
-
-      flex += sw * 0.6 * fwd;
-      bend += -lift * 1.0 * fwd;
-      flex += sw * 0.35 * bwd;
-      bend += -lift * 0.6 * bwd;
-
-      const a = Math.abs(lat);
-      if (a > 0.02) {
-        const lead = Math.sign(lat) === ls;
-        const stepOut = Math.max(0, Math.sin(phase));
-        abd += Math.sign(lat) * (lead ? 0.28 + 0.22 * stepOut : -0.08 + 0.22 * stepOut) * a;
-        bend += -stepOut * 0.35 * a;
-      }
-
-      // Lunge: during a stroke the front leg is the one opposite the racket side.
-      if (lunge > 0.02) {
-        const front = inStroke ? frontFoot : (Math.abs(this.lungeX) > 0.35 ? Math.sign(this.lungeX) === ls : ls === -ballSide);
-        if (front) {
-          flex = lerp(flex, 1.0 * Math.max(0.3, -this.lungeZ) + 0.25, lunge);
-          abd = lerp(abd, this.lungeX * 0.7, lunge);
-          bend = lerp(bend, -1.35, lunge);
-          foot.rotation.x = lerp(foot.rotation.x, 0.3, lunge);
-        } else {
-          // Back leg: bent too during the stroke (both knees bend), straighter in a running lunge.
-          flex = lerp(flex, -0.35 * Math.max(0.3, -this.lungeZ) - 0.05, lunge);
-          abd = lerp(abd, -this.lungeX * 0.15 + ls * 0.12, lunge);
-          bend = lerp(bend, inStroke ? -0.55 : -0.25, lunge);
-          foot.rotation.x = lerp(foot.rotation.x, -0.6, lunge);
-        }
-      }
-      hip.rotation.set(flex, 0, abd);
-      knee.rotation.x = bend;
+      const leg = this.legs[i];
+      const ft = this.feet[i];
+      // World -> root-local (inverse of rotation.y = facing).
+      const wx = ft.pos.x - r.position.x, wz = ft.pos.z - r.position.z;
+      const localX = wx * cosF - wz * sinF;
+      const localZ = wx * sinF + wz * cosF;
+      const hipLocal = this._e.set(leg.side * HIP_X, this.hips.position.y, 0);
+      const footLocal = this._w.set(localX, ft.pos.y + ANKLE, localZ);
+      // Toes down while the foot swings; back heel up in a stroke stance.
+      const frontFoot = leg.side === -strokeSide;
+      let toe = ft.swing >= 0 ? 0.35 * Math.sin(Math.PI * ft.swing) : 0;
+      if (!frontFoot && (pose.step > 0.3 || lunge > 0.3)) toe += 0.45 * Math.max(pose.step, lunge);
+      this._poseLeg(leg, hipLocal, footLocal, toe);
     }
 
     // ------------------------------------------------ arms
     this._poseArm(this.arms[1], pose.E, pose.W, pose.R, pose.N);
     const pump = fwd * 0.5 + bwd * 0.3;
     if (pump > 0.02 && swingT < 0 && this.prep < 0.3) {
-      const s = Math.sin(ph) * pump;
+      const s = Math.sin(this.time * 9) * pump;
       const LE = this._x.set(-0.35, -0.8 + s * 0.3, -0.3 - s * 0.6).normalize();
       const LW = this._y.set(-0.1, -0.3 + s * 0.2, -0.95).normalize();
       this._poseArm(this.arms[0], LE, LW, null, null);

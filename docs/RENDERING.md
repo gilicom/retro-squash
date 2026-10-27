@@ -103,9 +103,26 @@ Magazine's movement series, both linked in the README):
 | **Lunge** (last 0.9 m before the target while moving fast, or reaching for a ball during the stroke) | Hips drop ~22 cm, the leg on the lunge side extends toward the ball with a deep knee bend, the other leg trails straight, torso over the front knee, free arm out for balance. |
 | **Stroke** | Shoulders and hips turn toward the side wall on the ball side; high backswing → contact out in front at 30 % → follow-through across the body at 75 % → back to ready. Lift adapts to ball height (low balls are scooped). Forehand and backhand are mirrored sets. |
 
-Every parameter (run, lateral, forward, backward, lunge, facing) is smoothed
-with an exponential approach so poses blend instead of snapping. The head
-counter-rotates to stay level and turns toward the ball.
+**Footsteps**: feet never slide. Each foot has a planted world position.
+Its rest position is computed under the hip (spread by the stance, staggered
+and pushed by the stroke pose or lunge, led ahead by 0.12 s of velocity).
+When the planted foot is farther from its rest than a stride threshold
+(0.14 m + 0.08 m per m/s, up to 4 m/s) and the other foot is planted, it
+lifts and swings in an arc (duration 0.14-0.30 s, shorter when faster;
+height 4-16 cm) to the rest position and plants there. The legs are then
+solved with two-bone IK from the hip height to the ankle (knee bending
+forward), the foot kept flat with toes down during the swing and the back
+heel raised in a stroke stance. The hips drop when the feet are far apart so
+the legs can reach, which is what makes a lunge low. A teleport (new rally)
+resets the feet under the body.
+
+**Body orientation**: the body follows the ball. When it is the player's
+ball the hips turn 90° to the stroke's side wall as soon as they start
+moving to it (the turn is reduced by only 30 % at full run); between shots
+the body half-turns toward the ball and the head completes the turn.
+
+Every other parameter (run, lateral, forward, backward, lunge, facing) is
+smoothed with an exponential approach so poses blend instead of snapping.
 
 Joint sign conventions are documented at the top of `player3d.js`; knees
 only ever bend backwards.

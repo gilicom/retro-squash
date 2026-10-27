@@ -36,7 +36,8 @@ const settings = loadSettings();
 
 let game;
 const ui = new UI(document, settings, {
-  onPlay: () => game.startMatch(),
+  onPlay: () => { game.stopDemo(); game.startMatch(); },
+  onDemo: () => game.startDemo(),
   onResume: () => game.resume(),
   onRestart: () => { game.resume(); game.startMatch(); },
   onMenu: () => game.toMenu(),
