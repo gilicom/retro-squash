@@ -25,7 +25,7 @@
  */
 import * as THREE from 'three';
 import { buildBody, THIGH, SHIN } from './body3d.js';
-import { buildRacket } from './racket3d.js';
+import { makeRacket } from './racket-model.js';
 import { COURT } from '../config/court.js';
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -128,7 +128,7 @@ export class PlayerModel {
     this.head = body.head;
     this.legs = body.legs;
     this.arms = body.arms;
-    this.racket = buildRacket({ accent: color });
+    this.racket = makeRacket(color);
     this.arms[1].hand.add(this.racket);
 
     // Smoothed animation state.

@@ -44,7 +44,17 @@ texture. Pivots: hips → torso → head, two shoulder → elbow → hand chains
 two hip → knee → foot chains. The two players get different jersey numbers,
 skin and hair.
 
-**Racket** (`racket3d.js`): built to real proportions (68.5 cm): a 21 cm grip
+**Racket**: the game loads `public/models/racket.glb`, modelled in Blender
+(`racket-model.js`; 14k triangles, materials `RacketFrame`, `RacketGrip`,
+`RacketAccent`, `RacketStrings`; accent and strings are recoloured per
+player). It was built by script through the Blender MCP connection: a
+teardrop head swept as an aero-section tube with the throat toward the
+shaft, open throat with two struts and a bridge, dampener, octagonal grip
+with collar and butt cap, shaft bands, bumper at the tip, and real string
+tubes (14 × 18). Preview: `docs/design/racket-render.png`. If the file is
+missing, the procedural racket below is used.
+
+**Procedural racket** (`racket3d.js`, fallback): built to real proportions (68.5 cm): a 21 cm grip
 with a wrapped-tape texture, collar and coloured butt cap, slim clear-coated
 graphite shaft with accent bands, open throat with two struts, a bridge and a
 dampener, a teardrop head swept as an aero (wider than deep) tube along a

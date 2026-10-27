@@ -21,6 +21,10 @@ All notable changes to this project are documented here. The format follows
   orientations are read from the file. Procedural bodies remain the fallback. Pose viewer
   `model=1` shows the rigged character.
 
+### Added (assets)
+- Racket modelled in Blender (`public/models/racket.glb`), loaded and tinted
+  per player; the procedural racket remains the fallback.
+
 ### Added (shots)
 - Boast (side wall first) and back-wall boast. Both players are forced into
   them when the ball is deep behind the body; the computer also boasts

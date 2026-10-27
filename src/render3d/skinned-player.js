@@ -21,7 +21,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { PlayerModel } from './player3d.js';
-import { buildRacket } from './racket3d.js';
+import { makeRacket } from './racket-model.js';
 
 const cache = new Map();
 
@@ -155,7 +155,7 @@ export class SkinnedPlayer {
     }
 
     // Racket on the right hand: local correction so its world orientation equals the solver's.
-    this.racket = buildRacket({ accent: color });
+    this.racket = makeRacket(color);
     this.racketHolder = new THREE.Group();
     b.RightHand.add(this.racketHolder);
     this.racketHolder.add(this.racket);

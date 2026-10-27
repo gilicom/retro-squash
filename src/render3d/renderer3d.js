@@ -14,9 +14,12 @@ import { T_POSITION } from '../entities/player.js';
 import { buildCourt } from './court3d.js';
 import { PlayerModel } from './player3d.js';
 import { SkinnedPlayer, loadCharacter } from './skinned-player.js';
+import { loadRacketModel } from './racket-model.js';
 
 /** Rigged character used for the players (Mixamo rig). Relative to the site base. */
 const CHARACTER_URL = `${import.meta.env.BASE_URL}models/Xbot.glb`;
+/** Racket built in Blender (docs/design); the procedural racket is the fallback. */
+const RACKET_URL = `${import.meta.env.BASE_URL}models/racket.glb`;
 import { blobTexture, ringTexture } from './textures.js';
 
 const { W, L } = COURT;
@@ -52,7 +55,7 @@ export class Renderer3D {
     ];
     for (const m of this.models) this.scene.add(m.root);
     this.characterReady = false;
-    loadCharacter(CHARACTER_URL).then((gltf) => {
+    Promise.all([loadRacketModel(RACKET_URL), loadCharacter(CHARACTER_URL)]).then(([, gltf]) => {
       const looks = [{ number: 7 }, { number: 3 }];
       const colors = [0x2f7df6, 0xe5483c];
       const skinned = colors.map((c, i) => new SkinnedPlayer(gltf, c, looks[i]));

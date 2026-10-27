@@ -20,6 +20,7 @@
 import * as THREE from 'three';
 import { PlayerModel } from '../src/render3d/player3d.js';
 import { SkinnedPlayer, loadCharacter } from '../src/render3d/skinned-player.js';
+import { loadRacketModel } from '../src/render3d/racket-model.js';
 import { COURT } from '../src/config/court.js';
 
 // The model is placed on the court's centre line so the court-half logic
@@ -53,9 +54,9 @@ let model = new PlayerModel(0x2f7df6);
 scene.add(model.root);
 const qs = new URLSearchParams(location.search);
 const useModel = qs.get('model') === '1';
-const ready = useModel
+const ready = loadRacketModel('/models/racket.glb').then(() => useModel
   ? loadCharacter('/models/' + (qs.get('file') || 'Xbot.glb')).then((gltf) => { scene.remove(model.root); model = new SkinnedPlayer(gltf, 0x2f7df6); scene.add(model.root); })
-  : Promise.resolve();
+  : (scene.remove(model.root), model = new PlayerModel(0x2f7df6), scene.add(model.root)));
 const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffffff }));
 scene.add(ballMesh);
 
