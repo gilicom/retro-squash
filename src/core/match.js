@@ -20,7 +20,7 @@
  *   matchOver   { decision, score }
  */
 import { Ball } from '../physics/ball.js';
-import { SHOTS, strikeVelocity, contactPressure } from '../physics/shots.js';
+import { SHOTS, strikeVelocity, contactPressure, forcedShot } from '../physics/shots.js';
 import { Referee } from '../rules/referee.js';
 import { Player, T_POSITION, recoverySpeed } from '../entities/player.js';
 import { AIController } from '../entities/ai.js';
@@ -290,7 +290,8 @@ export class Match {
     const ball = this.ball;
     let shot, tx;
     if (p === this.human) {
-      shot = this.armed || SHOTS.drive;
+      // Deep behind the body only a boast is possible, whatever was armed.
+      shot = forcedShot(p, ball) || this.armed || SHOTS.drive;
       this.armed = null;
       // Angle comes from where the ball meets the racket and from body movement.
       tx = ball.x + (ball.x - p.x) * 2.2 + p.vx * 0.35;

@@ -45,6 +45,14 @@ A shot is a target **height on the front wall** and a **launch speed**:
 | drop | 0.62 m | 9.5 m/s | z ≈ 0.85 m, dies by 3.6 m |
 | serve | 3.30 m | 13 m/s | lands in the receiving quarter |
 | lobServe | 4.30 m | 11 m/s | high, deep |
+| boast | 1.30 m on the **side wall**, ~2.5 m from the front | 16 m/s | rebounds to the front wall, lands z ≈ 2.7 m |
+| backBoast | launch 35° into the **back wall** | 15.5 m/s | loops to the front wall at 1.5-3 m, sits up near the front |
+
+`forcedShot(player, ball)` returns a boast when the ball is behind the body
+(> 0.12 m) and deep (< 1 m from the back wall): the side-wall boast in a back
+corner, the back-wall boast in the middle. Both players are forced into it;
+the computer also plays an attacking boast out of a back corner when the
+opponent is deep.
 
 Speeds are deliberately below professional pace (pros exceed 40 m/s) so that a
 player who returns to the T can reach every ball; the **pace** setting scales

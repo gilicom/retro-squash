@@ -1,0 +1,187 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 900" width="1500" height="900" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6f3ec"/><stop offset="1" stop-color="#e8e2d6"/>
+    </linearGradient>
+    <linearGradient id="skinG" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d9a77c"/><stop offset="0.5" stop-color="#e8b88e"/><stop offset="1" stop-color="#c9955f"/>
+    </linearGradient>
+    <linearGradient id="shirtG" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#000" stop-opacity="0.18"/><stop offset="0.45" stop-color="#fff" stop-opacity="0.08"/><stop offset="1" stop-color="#000" stop-opacity="0.22"/>
+    </linearGradient>
+    <pattern id="strings" width="9" height="9" patternUnits="userSpaceOnUse">
+      <path d="M0 4.5H9M4.5 0V9" stroke="#e9e9e4" stroke-width="1.1"/>
+    </pattern>
+    <pattern id="wrap" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <rect width="10" height="10" fill="#1d1d20"/><rect width="10" height="2" fill="#3a3a40"/>
+    </pattern>
+    <style>
+      .skin { fill: url(#skinG); }
+      .shirt { fill: var(--team); }
+      .shirtLight { fill: var(--teamLight); }
+      .shirtDark { fill: var(--teamDark); }
+      .shorts { fill: #1f2531; }
+      .white { fill: #f5f5f3; }
+      .line { stroke: #2b2622; stroke-width: 2; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+      .thin { stroke: #2b2622; stroke-width: 1.2; fill: none; }
+      .label { font-size: 15px; fill: #2b2622; }
+      .small { font-size: 12px; fill: #5a534b; }
+      .title { font-size: 30px; font-weight: 700; fill: #2b2622; letter-spacing: 0.04em; }
+      .h2 { font-size: 17px; font-weight: 700; fill: #2b2622; }
+      .lead { stroke: #8a1f23; stroke-width: 1.2; fill: none; }
+    </style>
+
+    <!-- Front view athlete, centred on x=0, head top at y=0, feet at y=630 -->
+    <g id="athleteFront">
+      <!-- legs -->
+      <path class="skin" d="M-52 372 L-58 470 Q-60 490 -52 520 L-46 585 L-14 585 L-12 520 Q-6 480 -8 372 Z"/>
+      <path class="skin" d="M52 372 L58 470 Q60 490 52 520 L46 585 L14 585 L12 520 Q6 480 8 372 Z"/>
+      <path class="thin" d="M-54 478 q10 6 22 0 M54 478 q-10 6 -22 0"/>
+      <!-- socks -->
+      <path class="white" d="M-47 560 L-45 586 L-13 586 L-14 560 Z M47 560 L45 586 L13 586 L14 560 Z"/>
+      <path class="shirt" d="M-47 566 h33 v6 h-33z M14 566 h33 v6 h-33z"/>
+      <!-- shoes -->
+      <path class="white" d="M-50 584 Q-54 612 -46 620 L-6 622 Q-2 606 -8 586 Z"/>
+      <path class="white" d="M50 584 Q54 612 46 620 L6 622 Q2 606 8 586 Z"/>
+      <path class="shirt" d="M-46 596 L-10 598 L-10 604 L-47 602 Z M46 596 L10 598 L10 604 L47 602 Z"/>
+      <path d="M-48 616 L-6 618 L-6 626 L-48 624 Z M48 616 L6 618 L6 626 L48 624 Z" fill="#2a2f3a"/>
+      <!-- shorts -->
+      <path class="shorts" d="M-62 286 L-66 392 L-6 400 L0 352 L6 400 L66 392 L62 286 Z"/>
+      <path class="shirt" d="M-64 300 L-66 392 L-60 392 L-58 300 Z M64 300 L66 392 L60 392 L58 300 Z"/>
+      <!-- torso / polo -->
+      <path class="shirt" d="M-70 118 Q-78 122 -84 132 L-100 186 L-72 196 L-64 166 L-58 295 L58 295 L64 166 L72 196 L100 186 L84 132 Q78 122 70 118 L34 108 Q0 124 -34 108 Z"/>
+      <path class="shirtDark" d="M-64 166 L-58 295 L-46 295 L-50 170 Z M64 166 L58 295 L46 295 L50 170 Z"/>
+      <path class="shirtLight" d="M-58 215 L58 232 L58 248 L-58 231 Z"/>
+      <path fill="url(#shirtG)" d="M-70 118 Q-78 122 -84 132 L-100 186 L-72 196 L-64 166 L-58 295 L58 295 L64 166 L72 196 L100 186 L84 132 Q78 122 70 118 L34 108 Q0 124 -34 108 Z"/>
+      <path class="line" d="M-34 108 Q0 140 34 108"/>
+      <path class="thin" d="M0 124 L0 150"/>
+      <!-- arms -->
+      <path class="skin" d="M-84 134 L-104 230 L-108 322 L-84 326 L-78 236 L-72 196 Z"/>
+      <path class="skin" d="M84 134 L104 230 L108 322 L84 326 L78 236 L72 196 Z"/>
+      <path class="white" d="M-106 304 L-83 308 L-84 326 L-108 322 Z M106 304 L83 308 L84 326 L108 322 Z"/>
+      <ellipse class="skin" cx="-98" cy="340" rx="14" ry="18"/>
+      <ellipse class="skin" cx="98" cy="340" rx="14" ry="18"/>
+      <!-- neck and head -->
+      <path class="skin" d="M-14 88 L-13 112 Q0 122 13 112 L14 88 Z"/>
+      <ellipse class="skin" cx="0" cy="50" rx="34" ry="42"/>
+      <path d="M-34 44 Q-30 6 0 6 Q30 6 34 44 Q20 30 0 30 Q-20 30 -34 44 Z" fill="#2a1c12"/>
+      <path class="shirt" d="M-34 40 Q0 32 34 40 L34 50 Q0 42 -34 50 Z"/>
+      <path class="thin" d="M-14 60 q4 -4 9 0 M5 60 q4 -4 9 0 M-3 66 q3 8 6 0 M-8 78 q8 6 16 0"/>
+      <ellipse cx="-9" cy="61" rx="2.2" ry="2.5" fill="#2b2622"/><ellipse cx="9" cy="61" rx="2.2" ry="2.5" fill="#2b2622"/>
+    </g>
+
+    <!-- Side view athlete (facing left), ready stance -->
+    <g id="athleteSide">
+      <path class="skin" d="M-26 360 L-40 470 L-30 585 L-2 585 L4 480 L10 372 Z"/>
+      <path class="skin" d="M10 372 L14 470 L30 585 L58 585 L52 480 L46 362 Z"/>
+      <path class="white" d="M-30 560 L-30 586 L-2 586 L-2 560 Z M30 560 L30 586 L58 586 L56 560 Z"/>
+      <path class="white" d="M-36 584 Q-60 596 -56 618 L-2 622 L-2 586 Z M24 584 Q0 596 4 618 L58 622 L58 586 Z"/>
+      <path d="M-58 616 L-2 620 L-2 627 L-58 624 Z M2 616 L58 620 L58 627 L2 624 Z" fill="#2a2f3a"/>
+      <path class="shorts" d="M-40 286 L-44 380 L10 392 L54 376 L50 286 Z"/>
+      <path class="shirt" d="M-30 300 L-32 386 L-26 386 L-24 300 Z"/>
+      <path class="shirt" d="M-44 118 Q-62 130 -58 160 L-46 208 L-44 295 L52 295 L54 190 L60 140 Q56 118 36 112 Z"/>
+      <path fill="url(#shirtG)" d="M-44 118 Q-62 130 -58 160 L-46 208 L-44 295 L52 295 L54 190 L60 140 Q56 118 36 112 Z"/>
+      <!-- arm forward, racket up -->
+      <path class="skin" d="M-40 150 L-70 220 L-96 258 L-80 272 L-50 232 L-34 196 Z"/>
+      <path class="white" d="M-98 252 L-82 266 L-74 258 L-90 244 Z"/>
+      <ellipse class="skin" cx="-96" cy="246" rx="12" ry="14"/>
+      <path class="skin" d="M-10 88 L-10 112 Q6 120 20 112 L18 88 Z"/>
+      <ellipse class="skin" cx="2" cy="50" rx="36" ry="42"/>
+      <path d="M38 40 Q36 6 4 6 Q-28 6 -34 44 Q-10 26 20 32 Q32 36 38 40 Z" fill="#2a1c12"/>
+      <path class="shirt" d="M-34 42 Q0 34 38 42 L38 52 Q0 44 -34 52 Z"/>
+      <path class="thin" d="M-28 60 q-4 -2 -5 2 M-30 78 q6 4 10 0"/>
+      <ellipse cx="-24" cy="61" rx="2" ry="2.5" fill="#2b2622"/>
+      <!-- racket in the side-view hand -->
+      <g transform="translate(-100 238) rotate(-35)">
+        <rect x="-5" y="0" width="10" height="70" fill="url(#wrap)"/>
+        <rect x="-4" y="70" width="8" height="40" fill="#2b2b2f"/>
+        <path d="M-4 110 L-22 128 M4 110 L22 128" stroke="#2b2b2f" stroke-width="7" stroke-linecap="round"/>
+        <path d="M0 220 C-42 220 -46 175 -40 150 C-34 128 -14 118 0 118 C14 118 34 128 40 150 C46 175 42 220 0 220 Z" fill="url(#strings)" stroke="#1d1d20" stroke-width="7"/>
+        <path d="M-30 136 C-14 122 14 122 30 136" stroke="var(--team)" stroke-width="5" fill="none"/>
+      </g>
+    </g>
+
+    <!-- Racket, front view, 1 px = 1 mm / 1.1 -->
+    <g id="racketFront">
+      <rect x="-13" y="0" width="26" height="190" rx="6" fill="url(#wrap)"/>
+      <rect x="-15" y="-10" width="30" height="12" rx="4" fill="var(--team)"/>
+      <rect x="-9" y="190" width="18" height="130" rx="6" fill="#2b2b2f"/>
+      <rect x="-11" y="222" width="22" height="8" fill="var(--team)"/><rect x="-11" y="300" width="22" height="8" fill="var(--team)"/>
+      <path d="M-8 320 C-30 350 -60 370 -62 400 M8 320 C30 350 60 370 62 400" stroke="#2b2b2f" stroke-width="14" fill="none" stroke-linecap="round"/>
+      <rect x="-40" y="392" width="80" height="12" rx="4" fill="#2b2b2f"/>
+      <path d="M0 640 C-80 640 -98 560 -92 500 C-86 440 -40 400 0 400 C40 400 86 440 92 500 C98 560 80 640 0 640 Z" fill="url(#strings)" stroke="#1d1d20" stroke-width="14"/>
+      <path d="M-66 606 C-30 650 30 650 66 606" stroke="var(--team)" stroke-width="9" fill="none"/>
+      <ellipse cx="0" cy="408" rx="9" ry="6" fill="var(--team)"/>
+    </g>
+  </defs>
+
+  <rect width="1500" height="900" fill="url(#bg)"/>
+  <text x="40" y="54" class="title">RETRO SQUASH · CONCEPT SHEET · PLAYERS &amp; RACKET</text>
+  <text x="40" y="80" class="small">Realistic athlete, 1.80 m, 7.5 heads · Mixamo-compatible rig · to be modelled in Blender (MPFB base body + modelled kit), exported as glTF</text>
+
+  <!-- Player A front -->
+  <g style="--team:#2f7df6; --teamLight:#9cc3ff; --teamDark:#1d55b3" transform="translate(230 150)">
+    <use href="#athleteFront"/>
+  </g>
+  <text x="140" y="130" class="h2">PLAYER A · front · "YOU" (blue)</text>
+
+  <!-- callouts for A -->
+  <g class="label">
+    <path class="lead" d="M250 190 L330 170"/><text x="336" y="174">Headband in team colour</text>
+    <path class="lead" d="M300 300 L360 282"/><text x="366" y="286">Short-sleeve polo, side panels darker</text>
+    <path class="lead" d="M290 380 L360 362"/><text x="366" y="366">Light chest band (diagonal), number on the back</text>
+    <path class="lead" d="M336 460 L380 440"/><text x="386" y="444">Wristbands, white</text>
+    <path class="lead" d="M292 500 L360 522"/><text x="366" y="526">Shorts to mid thigh, team stripe</text>
+    <path class="lead" d="M262 720 L360 702"/><text x="366" y="706">Ankle socks with team ring</text>
+    <path class="lead" d="M268 760 L360 772"/><text x="366" y="776">Court shoes: white, gum sole, team stripe</text>
+  </g>
+
+  <!-- Player A side -->
+  <g style="--team:#2f7df6; --teamLight:#9cc3ff; --teamDark:#1d55b3" transform="translate(760 150)">
+    <use href="#athleteSide"/>
+  </g>
+  <text x="690" y="130" class="h2">PLAYER A · side · ready stance, racket up</text>
+  <g class="label">
+    <path class="lead" d="M700 470 L640 490"/><text x="520" y="494">Knees soft, on the toes</text>
+    <path class="lead" d="M690 390 L640 408"/><text x="498" y="412">Racket head above the hand</text>
+  </g>
+
+  <!-- Player B front (red, different skin and hair) -->
+  <g style="--team:#e5483c; --teamLight:#ffb3ad; --teamDark:#a82a21" transform="translate(1010 150)">
+    <g style="filter: saturate(1.1)">
+      <use href="#athleteFront"/>
+    </g>
+  </g>
+  <text x="930" y="130" class="h2">PLAYER B · "CPU" (red) · same body, other face/hair</text>
+
+  <!-- Racket -->
+  <g style="--team:#2f7df6" transform="translate(1330 120) scale(0.95)">
+    <use href="#racketFront"/>
+  </g>
+  <text x="1250" y="100" class="h2">RACKET</text>
+  <g class="small">
+    <text x="1250" y="800">Length 685 mm · head 270 × 200 mm (teardrop)</text>
+    <text x="1250" y="818">Open throat, graphite frame, aero section</text>
+    <text x="1250" y="836">Bumper strip + decals in team colour</text>
+    <text x="1250" y="854">Grip 210 mm, wrapped overgrip, end cap</text>
+    <text x="1250" y="872">14 × 18 strings, dampener at the throat</text>
+  </g>
+
+  <!-- palette -->
+  <g transform="translate(40 790)">
+    <text x="0" y="0" class="h2">PALETTE</text>
+    <rect x="0" y="14" width="46" height="46" rx="6" fill="#2f7df6"/><text x="0" y="78" class="small">team A</text>
+    <rect x="60" y="14" width="46" height="46" rx="6" fill="#e5483c"/><text x="60" y="78" class="small">team B</text>
+    <rect x="120" y="14" width="46" height="46" rx="6" fill="#1f2531"/><text x="120" y="78" class="small">shorts</text>
+    <rect x="180" y="14" width="46" height="46" rx="6" fill="#f5f5f3" stroke="#bbb"/><text x="180" y="78" class="small">white kit</text>
+    <rect x="240" y="14" width="46" height="46" rx="6" fill="#e8b88e"/><text x="240" y="78" class="small">skin A</text>
+    <rect x="300" y="14" width="46" height="46" rx="6" fill="#b87c52"/><text x="300" y="78" class="small">skin B</text>
+    <rect x="360" y="14" width="46" height="46" rx="6" fill="#1d1d20"/><text x="360" y="78" class="small">graphite</text>
+  </g>
+  <g class="small" transform="translate(520 804)">
+    <text x="0" y="0">BUILD NOTES · body: MPFB (MakeHuman) athletic preset, ~12k tris, 1024 px textures</text>
+    <text x="0" y="18">kit: polo, shorts, socks, shoes modelled on the body; Mixamo skeleton (mixamorig*), T-pose export</text>
+    <text x="0" y="36">racket: separate GLB, hand holds the top of the grip; strings as a textured plane; frame ≈ 2k tris</text>
+    <text x="0" y="54">faces: short hair + headband (A), cropped dark hair (B); eyes, brows; no helmets, no armour</text>
+  </g>
+</svg>

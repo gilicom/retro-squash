@@ -13,6 +13,10 @@
 | Middle click / K | Arm a **drop**. |
 | P / Escape | Pause / resume. |
 
+When the ball is deep behind your body the racket plays a boast automatically
+(side-wall boast from a corner, back-wall boast from the middle) whatever was
+armed, because a straight shot is not possible from there.
+
 An armed shot stays queued for 0.9 s (`ARM_DURATION`), then reverts to a drive.
 
 Keys are matched by physical position (`KeyboardEvent.code`), so WASD works

@@ -15,7 +15,6 @@ const DEFAULTS = {
   sound: true,
   lang: (navigator.language || 'en').toLowerCase().startsWith('he') ? 'he' : 'en',
   pace: 'normal',
-  graphics: '3d',
   autoT: true,
 };
 
@@ -44,14 +43,13 @@ const ui = new UI(document, settings, {
   onAction: (a) => game.input.pushAction(a),
   onSettings: (s) => { saveSettings(s); game.applySettings(s); },
 });
-game = new Game({
-  canvas3d: document.getElementById('court3d'),
-  canvas2d: document.getElementById('court2d'),
-  surface: document.getElementById('stage'),
-  ui,
-  settings,
-});
-ui.showMenu();
+try {
+  game = new Game({ canvas: document.getElementById('court3d'), surface: document.getElementById('stage'), ui, settings });
+} catch (err) {
+  console.error(err);
+  document.getElementById('webglError').classList.remove('hidden');
+}
+if (game) ui.showMenu();
 
 // Expose for debugging in the console.
 window.squash = game;

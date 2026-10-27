@@ -84,3 +84,11 @@ for (const side of ['R', 'L']) {
     }
   }
 }
+
+console.log('\n=== Boasts from the back corners (ball behind the player, low) ===');
+for (const id of ['boast', 'backBoast']) {
+  for (const [x, z, y] of [[0.5, 9.2, 0.4], [5.9, 9.3, 0.3], [0.4, 8.6, 0.6], [3.2, 9.4, 0.5]]) {
+    const r = run({ x, y, z }, SHOTS[id], x);
+    console.log(`${id.padEnd(9)} from (${x},${z}) front y=${r.frontY?.toFixed(2)} land=${fmt(r.landing)} 2nd=${fmt(r.second)} ${r.verdict}`);
+  }
+}

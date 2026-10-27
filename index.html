@@ -15,10 +15,9 @@
 </head>
 <body>
   <div id="app">
-    <!-- Both renderers draw into the stage; only one canvas is visible at a time. -->
     <div id="stage">
       <canvas id="court3d" aria-label="Squash court"></canvas>
-      <canvas id="court2d" class="hidden" aria-hidden="true"></canvas>
+      <div id="webglError" class="overlay hidden"><div class="panel small"><h2 data-i18n="webglTitle"></h2><p class="sub" data-i18n="webglBody"></p></div></div>
     </div>
 
     <!-- HUD -->
@@ -90,13 +89,6 @@
             <div class="seg" data-key="autoT">
               <button data-value="true" data-i18n="on"></button>
               <button data-value="false" data-i18n="off"></button>
-            </div>
-          </div>
-          <div class="row">
-            <label data-i18n="graphics"></label>
-            <div class="seg" data-key="graphics">
-              <button data-value="3d" data-i18n="g3d"></button>
-              <button data-value="classic" data-i18n="classic"></button>
             </div>
           </div>
           <div class="row">

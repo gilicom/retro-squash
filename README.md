@@ -9,8 +9,8 @@ bounces, the full World Squash rulebook for a singles rally, stamina, a computer
 opponent that reads the ball, and controls for both desktop and touch screens.
 
 - **Play in the browser**, desktop or phone, portrait or landscape.
-- **Real 3D** (Three.js) with shadows, a glass back wall and procedurally built
-  players; a classic 2-D canvas renderer is kept as a fallback.
+- **Real 3D** (Three.js) with shadows, a glass back wall and rigged characters
+  driven by procedural animation.
 - **Real rules**: tin, out lines, service boxes, receiving quarter, one bounce,
   point-a-rally to 11, win by 2, best of 1 / 3 / 5.
 - **Stamina and the T**: running drains a bar; standing on the T refills it.
@@ -72,9 +72,7 @@ src/
   core/
     match.js            Pure match simulation (runs in Node) and its events
     game.js             Browser glue: loop, renderer choice, input, sound, HUD
-    camera.js           Pinhole camera for the classic renderer
-  render3d/             Three.js renderer: court, lights, players, ball, effects
-  render/               Classic 2-D canvas renderer (fallback / low-end devices)
+  render3d/             Three.js renderer: court, lights, characters, ball, effects
   input/                Mouse, keyboard and touch
   audio/                Procedural Web Audio sound effects
   ui/                   DOM overlay and EN/HE strings

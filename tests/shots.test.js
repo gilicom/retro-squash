@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { aimAt, strikeVelocity, SHOTS } from '../src/physics/shots.js';
+import { aimAt, strikeVelocity, forcedShot, SHOTS } from '../src/physics/shots.js';
 import { Ball } from '../src/physics/ball.js';
 import { PHYSICS } from '../src/config/physics.js';
 import { COURT } from '../src/config/court.js';
@@ -47,4 +47,20 @@ test('target x is clamped inside the court', () => {
   const v = strikeVelocity(from, SHOTS.drive, 9, () => 0.5);
   const hit = heightAtFrontWall(from, v);
   assert.ok(hit.x <= COURT.W && hit.x >= COURT.W - 0.3);
+});
+
+test('boasts from the back corners reach the front wall legally', () => {
+  for (const [id, from] of [['boast', { x: 0.5, y: 0.4, z: 9.2 }], ['boast', { x: 5.9, y: 0.3, z: 9.3 }], ['backBoast', { x: 3.2, y: 0.5, z: 9.4 }], ['backBoast', { x: 0.6, y: 0.4, z: 9.2 }]]) {
+    const v = strikeVelocity(from, SHOTS[id], from.x, () => 0.5);
+    const hit = heightAtFrontWall(from, v);
+    assert.ok(hit, `${id} reaches the front wall`);
+    assert.ok(hit.y > COURT.TIN && hit.y < COURT.FRONT_OUT, `${id} between tin and out (${hit.y.toFixed(2)})`);
+  }
+});
+
+test('forcedShot picks a boast only when the ball is deep behind the body', () => {
+  const p = { x: 3.2, z: 8.6 };
+  assert.equal(forcedShot(p, { x: 3.2, z: 7.5 }), null, 'ball in front: free choice');
+  assert.equal(forcedShot(p, { x: 0.5, z: 9.3 }), SHOTS.boast, 'back corner: side-wall boast');
+  assert.equal(forcedShot(p, { x: 3.0, z: 9.4 }), SHOTS.backBoast, 'deep middle: back-wall boast');
 });

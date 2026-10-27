@@ -20,8 +20,7 @@ All modules share one metric coordinate system:
 
 Players face the front wall, so "right" is +x and a shot travels toward z = 0.
 The 3D renderer uses the same axes directly (Three.js is right-handed with the
-camera looking down −z, which matches). The classic renderer projects them
-through `core/camera.js`.
+camera looking down −z, which matches). 
 
 ## Module map
 
@@ -31,8 +30,8 @@ through `core/camera.js`.
                    │                              │ events / callbacks                │
                    └──► core/game.js ─────────────┴─► input/input.js   audio/sound.js │
                            │        │                                                 │
-                           │        └─► render3d/renderer3d.js   or   render/renderer.js
-                           │             (court3d, player3d, textures)   (court, entities, camera)
+                           │        └─► render3d/renderer3d.js
+                           │             (court3d, body3d, player3d, skinned-player, racket3d, textures)
                            ▼
                     ┌───────────────────────────── pure core ─────────────────────────┐
                     │ core/match.js                                                   │
@@ -72,11 +71,9 @@ original; skill is in positioning, timing of the shot-type buttons and stamina.
 ### Browser layer
 
 - `core/game.js` — the frame loop (`requestAnimationFrame`), pace scaling,
-  pause/menu modes, renderer selection with WebGL fallback, and the mapping of
-  match events to sound and HUD.
+  pause/menu modes, demo mode, and the mapping of match events to sound and HUD.
 - `render3d/` — Three.js scene (see RENDERING.md). Interface:
   `resize()`, `draw(scene)`, `floorPoint(sx, sy)`, `dispose()`.
-- `render/` — classic canvas renderer with the same interface.
 - `input/input.js` — collects *intent* only (`pointerTarget`, drag deltas, held
   keys, queued actions); the game decides what it means.
 - `audio/sound.js` — procedural Web Audio; no asset files.
@@ -101,7 +98,7 @@ the match and aged/removed by whichever renderer is active.
 
 Settings are a flat object persisted in `localStorage`
 (`retro-squash.settings.v2`): `difficulty`, `pace`, `bestOf`, `autoT`,
-`graphics`, `sound`, `lang`. `Game.applySettings` applies everything live
+`sound`, `lang`. `Game.applySettings` applies everything live
 except `bestOf`, which takes effect at the next match.
 
 ## Porting the core elsewhere

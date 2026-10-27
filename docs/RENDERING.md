@@ -1,18 +1,17 @@
 # Rendering
 
-Two renderers share one interface so the game can swap them:
+The game renders with one WebGL renderer built on Three.js
+(`src/render3d/`). Its interface to the game is:
 
 ```js
 resize()                 // fit to the canvas CSS size and device pixel ratio
-draw({ ball, players, effects, dt, inPlay })
+draw({ ball, players, effects, dt, inPlay, turn })
 floorPoint(sx, sy)       // court {x, z} under a screen point, or null
 dispose?()
 ```
 
-`Game._createRenderer` tries the 3D renderer first and falls back to the
-classic one if `WebGLRenderer` throws (no WebGL, blocked context). The menu's
-*Graphics* setting switches live; each renderer has its own canvas inside
-`#stage` and the unused one is hidden.
+If WebGL is unavailable the game shows an explanatory panel instead of
+starting (the earlier 2-D canvas renderer was removed).
 
 ## 3D renderer (`src/render3d/`)
 
@@ -189,15 +188,6 @@ leaves room for the HUD. During play the camera drifts up to 32 cm sideways
 toward the ball for parallax.
 
 `floorPoint` ray-casts the pointer through the camera against the plane y = 0.
-
-## Classic renderer (`src/render/`)
-
-A 2-D canvas renderer with a pinhole camera (`core/camera.js`) that projects
-3D points to the screen; straight lines stay straight under perspective, so the
-court is projected polygons and segments with gradients. Players are drawn as
-stylised figures from a few projected key points; the near player is 82 %
-opaque so it never hides the ball. It exists for devices without WebGL and as
-a readable reference implementation of the projection maths.
 
 ## Performance notes
 

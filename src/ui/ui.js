@@ -13,7 +13,6 @@ import { t } from './i18n.js';
  * @property {boolean} sound
  * @property {'en'|'he'} lang
  * @property {'relaxed'|'normal'|'fast'} pace
- * @property {'3d'|'classic'} graphics
  * @property {boolean} autoT   return-to-T assist
  */
 

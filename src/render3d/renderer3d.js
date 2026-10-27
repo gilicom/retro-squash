@@ -1,8 +1,7 @@
 /**
  * @module render3d/renderer3d
- * WebGL renderer built on Three.js. Exposes the same interface as the
- * classic canvas renderer ({@link resize}, {@link draw}, {@link floorPoint})
- * so the game can swap between them.
+ * WebGL renderer built on Three.js: {@link resize}, {@link draw} and
+ * {@link floorPoint} are what the game loop uses.
  *
  * Camera: a broadcast-style perspective from behind the glass back wall.
  * On resize the field of view is fitted so the whole court is visible in
@@ -262,7 +261,7 @@ export class Renderer3D {
     }
   }
 
-  /** Release GPU resources (used when switching to the classic renderer). */
+  /** Release GPU resources. */
   dispose() {
     this.gl.dispose();
   }

@@ -6,7 +6,7 @@
  * the human is standing.
  */
 import { Ball } from '../physics/ball.js';
-import { SHOTS } from '../physics/shots.js';
+import { SHOTS, forcedShot } from '../physics/shots.js';
 import { COURT } from '../config/court.js';
 import { RECOVERY_SPEED } from '../config/difficulty.js';
 import { T_POSITION, recoverySpeed } from './player.js';
@@ -133,6 +133,12 @@ export class AIController {
     let shot = SHOTS.drive;
     let tx = farSide;
 
+    const forced = forcedShot(this.p, ball);
+    if (forced) return { shot: forced, tx };
+    if (ball.z > COURT.L - 1.6 && (ball.x < 0.9 || ball.x > COURT.W - 0.9) && opponent.z > 5.5 && r < this.d.aggression * 0.6) {
+      // Opponent deep: a boast out of the back corner drags them to the front.
+      return { shot: SHOTS.boast, tx };
+    }
     if (ball.z < 3.2 && r < this.d.aggression + 0.35) {
       // Close to the front wall: drop shot away from the opponent.
       shot = SHOTS.drop;

@@ -21,6 +21,15 @@ All notable changes to this project are documented here. The format follows
   orientations are read from the file. Procedural bodies remain the fallback. Pose viewer
   `model=1` shows the rigged character.
 
+### Added (shots)
+- Boast (side wall first) and back-wall boast. Both players are forced into
+  them when the ball is deep behind the body; the computer also boasts
+  deliberately out of a back corner when the opponent is deep.
+
+### Removed
+- The 2-D canvas renderer and the Graphics setting; the game is WebGL only
+  and shows a message when WebGL is unavailable.
+
 ### Changed
 - After a rally ends (tin, out, double bounce) the ball keeps bouncing under
   the same physics until it dies, instead of freezing at the decision.

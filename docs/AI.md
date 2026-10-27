@@ -41,6 +41,8 @@ the AI's turn, `Match._strike` asks `chooseShot`.
 | Ball near the front (z < 3.2) and roll < aggression + 0.35 | **drop** away from the opponent |
 | Opponent forward (z < 4.8), 75 % | **lob** (aimed near the centre so it stays in) or hard **drive** past them |
 | Ball above 1.0 m and in front of mid-court, roll < aggression | **smash** |
+| Ball deep behind the body | **forced**: boast from a back corner, back-wall boast from the middle (`forcedShot`) |
+| Ball in a back corner, opponent deep (z > 5.5), roll < 0.6 × aggression | attacking **boast** to drag the opponent forward |
 | Otherwise | **drive** to the side wall away from the opponent; 18 % of the time a cross-court instead |
 
 A Gaussian aim error (`aimError`) is added to the target x.

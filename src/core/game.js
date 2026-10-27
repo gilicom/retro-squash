@@ -1,7 +1,7 @@
 /**
  * @module core/game
- * Browser glue around {@link Match}: the frame loop, renderer selection
- * (3D WebGL or classic canvas), input mapping, sound, HUD and panels.
+ * Browser glue around {@link Match}: the frame loop, the WebGL renderer,
+ * input mapping, sound, HUD and panels.
  *
  * Game states layered on top of the match: 'menu' and 'paused' are owned
  * here; everything else is the match's own state.
@@ -10,7 +10,6 @@
  * literally slows the ball and the players together.
  */
 import { Match } from './match.js';
-import { Renderer } from '../render/renderer.js';
 import { Renderer3D } from '../render3d/renderer3d.js';
 import { Input } from '../input/input.js';
 import { Sound } from '../audio/sound.js';
@@ -23,19 +22,16 @@ const DEMO_CONTINUE_DELAY = 2.5;
 
 export class Game {
   /**
-   * @param {{canvas3d: HTMLCanvasElement, canvas2d: HTMLCanvasElement, surface: HTMLElement, ui: import('../ui/ui.js').UI, settings: import('../ui/ui.js').Settings}} opts
+   * @param {{canvas: HTMLCanvasElement, surface: HTMLElement, ui: import('../ui/ui.js').UI, settings: import('../ui/ui.js').Settings}} opts
+   * @throws when WebGL is unavailable
    */
-  constructor({ canvas3d, canvas2d, surface, ui, settings }) {
-    this.canvas3d = canvas3d;
-    this.canvas2d = canvas2d;
+  constructor({ canvas, surface, ui, settings }) {
+    this.canvas = canvas;
     this.surface = surface;
     this.ui = ui;
     this.settings = settings;
 
-    this.renderer = null;
-    this.rendererKind = null;
-    this._webglFailed = false;
-    this._createRenderer(settings.graphics);
+    this.renderer = new Renderer3D(canvas);
 
     this.input = new Input(surface, (sx, sy) => {
       const r = surface.getBoundingClientRect();
@@ -116,30 +112,6 @@ export class Game {
     this.demoContinue = fn;
   }
 
-  // --------------------------------------------------------------- renderer
-
-  /**
-   * Create the renderer. '3d' uses WebGL (Three.js) and falls back to the
-   * classic canvas renderer when WebGL is unavailable.
-   * @param {'3d'|'classic'} kind
-   */
-  _createRenderer(kind) {
-    if (this.renderer && this.renderer.dispose) this.renderer.dispose();
-    let r = null;
-    if (kind === '3d' && !this._webglFailed) {
-      try { r = new Renderer3D(this.canvas3d); } catch (err) {
-        console.warn('WebGL unavailable, using classic renderer', err);
-        this._webglFailed = true;
-      }
-    }
-    if (!r) { r = new Renderer(this.canvas2d); kind = 'classic'; }
-    this.renderer = r;
-    this.rendererKind = kind;
-    this.canvas3d.classList.toggle('hidden', kind !== '3d');
-    this.canvas2d.classList.toggle('hidden', kind !== 'classic');
-    this.renderer.resize();
-  }
-
   // ---------------------------------------------------------------- settings
 
   /** Apply changed settings; everything except match length takes effect immediately. */
@@ -149,7 +121,6 @@ export class Game {
     this.match.autoT = s.autoT;
     this.sound.setEnabled(s.sound);
     this.ui.applyLanguage();
-    if (s.graphics !== this.rendererKind) this._createRenderer(s.graphics);
     if (this.mode !== 'menu') this.ui.updateScore(this.match.referee.getScore());
   }
 

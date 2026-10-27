@@ -30,7 +30,56 @@ export const SHOTS = Object.freeze({
   drop: { id: 'drop', ty: 0.62, speed: 9.5, tyJitter: 0.05 },
   serve: { id: 'serve', ty: 3.3, speed: 13, tyJitter: 0.1 },
   lobServe: { id: 'lobServe', ty: 4.3, speed: 11, tyJitter: 0.1 },
+  /** Boast: into the nearer side wall first, then the front wall. Target height is on the side wall. */
+  boast: { id: 'boast', ty: 1.3, speed: 16, tyJitter: 0.1, wall: 'side' },
+  /** Back-wall boast: lifted into the back wall at 35° so it loops to the front wall (launch angle, not a target). */
+  backBoast: { id: 'backBoast', ty: 0, speed: 15.5, tyJitter: 0, wall: 'back', elevation: 35 },
 });
+
+/**
+ * Velocity for a boast: aim at a point on the nearer side wall, about 2.5 m
+ * from the front wall, so the rebound carries to the front wall.
+ * @param {{x:number,y:number,z:number}} ball
+ * @param {ShotType} shot
+ * @param {() => number} [rand]
+ * @param {number} [error=0]
+ */
+export function boastVelocity(ball, shot, rand = Math.random, error = 0) {
+  const wallX = ball.x < COURT.W / 2 ? 0.02 : COURT.W - 0.02;
+  const tz = Math.max(1.2, Math.min(3.2, ball.z * 0.32)) + (rand() - 0.5) * 0.4 * (1 + error);
+  const ty = shot.ty - error * 0.3 + (rand() - 0.5) * 2 * shot.tyJitter * (1 + error * 2);
+  return aimAt(ball, wallX, Math.max(ty, 0.3), shot.speed * (1 - Math.min(error, 1.5) * 0.12), tz);
+}
+
+/**
+ * Velocity for a back-wall boast: lift the ball into the back wall so it
+ * rebounds high and forward to the front wall.
+ */
+export function backBoastVelocity(ball, shot, rand = Math.random, error = 0) {
+  const el = (shot.elevation + (rand() - 0.5) * 8 * (1 + error)) * Math.PI / 180;
+  const speed = shot.speed * (1 - Math.min(error, 1.5) * 0.1) * (1 + (rand() - 0.5) * 0.08);
+  return {
+    vx: (COURT.W / 2 - ball.x) * 0.3 + (rand() - 0.5) * 1.5,
+    vy: speed * Math.sin(el),
+    vz: speed * Math.cos(el), // toward the back wall
+  };
+}
+
+/**
+ * The shot a player is forced into when the ball is behind the body deep in
+ * the back of the court: a boast into the near side wall when the ball is
+ * in a back corner, a back-wall boast when it is deep in the middle.
+ * @param {{x:number,z:number}} p player
+ * @param {{x:number,z:number}} ball
+ * @returns {ShotType|null} the forced shot, or null when a normal shot is possible
+ */
+export function forcedShot(p, ball) {
+  const behind = ball.z > p.z + 0.12;
+  const deep = ball.z > COURT.L - 1.0;
+  if (!behind || !deep) return null;
+  const nearSide = ball.x < 1.0 || ball.x > COURT.W - 1.0;
+  return nearSide ? SHOTS.boast : SHOTS.backBoast;
+}
 
 /**
  * Simulate a drag+gravity flight (ignoring walls) from `from` with velocity
@@ -89,6 +138,8 @@ export function aimAt(from, tx, ty, speed, tz = 0) {
  * @param {number} [fatigue=0] 0 = fresh, 1 = exhausted; adds height scatter and takes pace off the shot
  */
 export function strikeVelocity(ball, shot, tx, rand = Math.random, error = 0) {
+  if (shot.wall === 'side') return boastVelocity(ball, shot, rand, error);
+  if (shot.wall === 'back') return backBoastVelocity(ball, shot, rand, error);
   // Under pressure the contact is less clean: the ball goes lower on
   // average (tin risk), scatters more in height and width, and loses pace.
   const jitter = shot.tyJitter * (1 + error * 2.5);
