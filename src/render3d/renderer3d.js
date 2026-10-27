@@ -52,14 +52,14 @@ export class Renderer3D {
 
     // Players.
     this.models = [
-      new PlayerModel(0x2f7df6, { number: 7, skin: 0xe3b48c, hair: 0x2a1c12 }),
-      new PlayerModel(0xe5483c, { number: 3, skin: 0xc48a5a, hair: 0x111111 }),
+      new PlayerModel(0xc6ff2e, { number: 7, skin: 0xe3b48c, hair: 0x2a1c12 }),
+      new PlayerModel(0xff8a3d, { number: 3, skin: 0xc48a5a, hair: 0x111111 }),
     ];
     for (const m of this.models) this.scene.add(m.root);
     this.characterReady = false;
     Promise.all([loadRacketModel(RACKET_URL), loadCharacter(CHARACTER_URL).catch(() => loadCharacter(FALLBACK_CHARACTER_URL))]).then(([, gltf]) => {
       const looks = [{ number: 7, hair: 0x3b2a1e }, { number: 3, hair: 0x120d0a }];
-      const colors = [0x2f7df6, 0xe5483c];
+      const colors = [0xc6ff2e, 0xff8a3d];
       const skinned = colors.map((c, i) => new SkinnedPlayer(gltf, c, looks[i]));
       for (const m of this.models) this.scene.remove(m.root);
       this.models = skinned;

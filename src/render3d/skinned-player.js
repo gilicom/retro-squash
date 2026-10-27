@@ -39,6 +39,55 @@ export function loadCharacter(url) {
 
 const UP = new THREE.Vector3(0, 1, 0);
 
+/**
+ * Squash grip, measured on the Blender character (tools/blender): the handle crosses the palm
+ * at GRIP_ANGLE above the knuckle line (toward the fingertips) and the butt of the grip sits
+ * at GRIP_BUTT in the palm frame (lateral toward the thumb, along the fingers, out of the palm).
+ */
+const GRIP_ANGLE = 18 * Math.PI / 180;
+const GRIP_BUTT = { lat: -0.0584, fwd: 0.0682, out: 0.031 };
+
+const kitMapCache = new Map();
+
+/**
+ * The kit textures are painted black with lime accents; swap the lime for the team colour
+ * (keeping the texture's shading) so the two players can be told apart.
+ * @param {THREE.Texture} map
+ * @param {THREE.Color} tint linear team colour
+ */
+function recolourKitMap(map, tint) {
+  const key = `${map.uuid}:${tint.getHex()}`;
+  if (kitMapCache.has(key)) return kitMapCache.get(key);
+  const img = map.image;
+  if (!img || !img.width || typeof document === 'undefined') return map;
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width; canvas.height = img.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const px = data.data;
+  const t = tint.clone().convertLinearToSRGB();
+  const tr = t.r * 255, tg = t.g * 255, tb = t.b * 255;
+  for (let i = 0; i < px.length; i += 4) {
+    const r = px[i], g = px[i + 1], b = px[i + 2];
+    const m = Math.min(1, Math.max(0, (g - Math.max(r, b)) / 60));
+    if (m <= 0) continue;
+    const shade = g / 255;
+    px[i] = r + (tr * shade - r) * m;
+    px[i + 1] = g + (tg * shade - g) * m;
+    px[i + 2] = b + (tb * shade - b) * m;
+  }
+  ctx.putImageData(data, 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = map.colorSpace;
+  tex.flipY = map.flipY;
+  tex.wrapS = map.wrapS; tex.wrapT = map.wrapT;
+  tex.anisotropy = map.anisotropy;
+  tex.needsUpdate = true;
+  kitMapCache.set(key, tex);
+  return tex;
+}
+
 /** Quaternion of the frame whose +y is `y` and whose +z is `zHint` made orthogonal. */
 function frameYZ(y, zHint, out, m = new THREE.Matrix4(), tx = new THREE.Vector3(), ty = new THREE.Vector3(), tz = new THREE.Vector3()) {
   ty.copy(y).normalize();
@@ -75,6 +124,7 @@ export class SkinnedPlayer {
     const b = this.bones;
     const need = ['Hips', 'Spine', 'Head', 'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'LeftToeBase', 'RightUpLeg', 'RightLeg', 'RightFoot', 'RightToeBase',
       'LeftArm', 'LeftForeArm', 'LeftHand', 'LeftHandMiddle1', 'RightArm', 'RightForeArm', 'RightHand', 'RightHandMiddle1'];
+    const optional = ['LeftHandThumb1', 'RightHandThumb1', 'LeftHandThumb2', 'RightHandThumb2'];
     for (const n of need) if (!b[n]) throw new Error(`character is missing bone ${n}`);
     this.armature = b.Hips.parent;
 
@@ -82,6 +132,7 @@ export class SkinnedPlayer {
     const pos = (bone) => bone.getWorldPosition(new THREE.Vector3());
     const P = {};
     for (const n of need) P[n] = pos(b[n]);
+    for (const n of optional) if (b[n]) P[n] = pos(b[n]);
     const thigh = P.LeftUpLeg.distanceTo(P.LeftLeg);
     const shin = P.LeftLeg.distanceTo(P.LeftFoot);
     const ankle = P.LeftFoot.y - Math.min(P.LeftToeBase.y, 0);
@@ -113,9 +164,27 @@ export class SkinnedPlayer {
       LeftForeArm: frameYX(dir('LeftForeArm', 'LeftHand'), new THREE.Vector3(0, -1, 0), new THREE.Quaternion()),
       RightArm: frameYX(dir('RightArm', 'RightForeArm'), new THREE.Vector3(0, 1, 0), new THREE.Quaternion()),
       RightForeArm: frameYX(dir('RightForeArm', 'RightHand'), new THREE.Vector3(0, 1, 0), new THREE.Quaternion()),
-      LeftHand: frameYZ(dir('LeftHand', 'LeftHandMiddle1'), new THREE.Vector3(0, -1, 0), new THREE.Quaternion()),
-      RightHand: frameYZ(dir('RightHand', 'RightHandMiddle1'), new THREE.Vector3(0, -1, 0), new THREE.Quaternion()),
     };
+    // Hands: y = finger direction, x = lateral toward the thumb side (where the racket head
+    // leaves the fist), z = palm normal. Without thumb bones fall back to a T-pose guess.
+    this.palm = {};
+    for (const side of ['Left', 'Right']) {
+      const d0 = dir(`${side}Hand`, `${side}HandMiddle1`);
+      let lat;
+      if (P[`${side}HandThumb1`]) {
+        lat = P[`${side}HandThumb1`].clone().sub(P[`${side}Hand`]);
+        lat.addScaledVector(d0, -lat.dot(d0)).normalize();
+      } else {
+        lat = new THREE.Vector3(0, 0, 1).addScaledVector(d0, -d0.z).normalize();
+      }
+      // Palm normal: in an A/T-pose the palms face the body (down / inward), i.e. toward the hips.
+      // `s` records the handedness of (fingers, lateral, palm) so the posed palm can be aimed.
+      const n0 = new THREE.Vector3().crossVectors(d0, lat).normalize();
+      const s = n0.dot(P.Hips.clone().sub(P[`${side}Hand`])) >= 0 ? 1 : -1;
+      n0.multiplyScalar(s);
+      this.rest[`${side}Hand`] = frameYX(d0, lat, new THREE.Quaternion());
+      this.palm[side] = { d0, lat, n0, s };
+    }
     // Rest world rotation of every bone (needed when it is not the identity).
     this.restWorld = {};
     for (const n of Object.keys(this.rest)) this.restWorld[n] = b[n].getWorldQuaternion(new THREE.Quaternion());
@@ -135,6 +204,7 @@ export class SkinnedPlayer {
         const c = m.clone();
         if (!dressed) c.color.copy(tint).lerp(new THREE.Color(0xffffff), m.map ? 0.72 : 0.35);
         else if (/hair/i.test(m.name) && look.hair !== undefined) c.color.set(look.hair);
+        else if (m.map && /kit/i.test(m.name)) c.map = recolourKitMap(m.map, tint);
         return c;
       });
       o.material = Array.isArray(o.material) ? cloned : cloned[0];
@@ -153,8 +223,9 @@ export class SkinnedPlayer {
       }
     });
 
-    // Fingers: curl the racket hand around the grip, relax the free hand.
-    for (const side of ['Left', 'Right']) {
+    // Fingers of an undressed mannequin: curl the racket hand around the grip, relax the free
+    // hand. The dressed character is exported with its fingers already posed.
+    if (!dressed) for (const side of ['Left', 'Right']) {
       const grip = side === 'Right';
       for (const finger of ['Index', 'Middle', 'Ring', 'Pinky']) {
         for (let j = 1; j <= 3; j++) {
@@ -261,12 +332,21 @@ export class SkinnedPlayer {
       axis.normalize();
       desired.set(`${side}Arm`, this._desired(`${side}Arm`, frameYX(dU, axis, new THREE.Quaternion()), new THREE.Quaternion()));
       desired.set(`${side}ForeArm`, this._desired(`${side}ForeArm`, frameYX(dF, axis, new THREE.Quaternion()), new THREE.Quaternion()));
-      // Hand: fingers along the pivot's -y (continuing into the racket handle), palm normal along the pivot's -z.
+      // Hand. Racket hand: the handle (solver hand -y, toward the racket head) runs across the
+      // palm at GRIP_ANGLE from the knuckle line (squash grip: the V between thumb and index on
+      // the top bevel, butt outside the heel of the hand) and the strings face the palm (solver
+      // hand +z). Free hand: fingers continue the forearm, palm facing the solver's -z.
       const qH = arm.hand.getWorldQuaternion(new THREE.Quaternion());
-      const dH = new THREE.Vector3(0, -1, 0).applyQuaternion(qH);
-      const nH = new THREE.Vector3(0, 0, -1).applyQuaternion(qH);
-      desired.set(`${side}Hand`, this._desired(`${side}Hand`, frameYZ(dH, nH, new THREE.Quaternion()), new THREE.Quaternion()));
-      if (side === 'Right') this._handWorld = qH;
+      const R = new THREE.Vector3(0, -1, 0).applyQuaternion(qH);
+      const N = new THREE.Vector3(0, 0, 1).applyQuaternion(qH);
+      const palm = this.palm[side];
+      const Np = side === 'Right' ? N : N.clone().negate();
+      const e2 = new THREE.Vector3().crossVectors(R, Np).multiplyScalar(palm.s);   // across the handle, in the palm plane
+      const a = side === 'Right' ? GRIP_ANGLE : Math.PI / 2;
+      const dH = new THREE.Vector3().addScaledVector(R, Math.sin(a)).addScaledVector(e2, Math.cos(a)).normalize();
+      const latH = new THREE.Vector3().addScaledVector(R, Math.cos(a)).addScaledVector(e2, -Math.sin(a)).normalize();
+      desired.set(`${side}Hand`, this._desired(`${side}Hand`, frameYX(dH, latH, new THREE.Quaternion()), new THREE.Quaternion()));
+      if (side === 'Right') { this._handWorld = qH; this._palmDir = dH; this._palmLat = latH; this._palmN = N; }
     }
 
     // Apply: walk the hierarchy so each local rotation is relative to the parent's actual world rotation.
@@ -288,5 +368,9 @@ export class SkinnedPlayer {
     this.root.updateMatrixWorld(true);
     const handWorld = b.RightHand.getWorldQuaternion(new THREE.Quaternion());
     this.racketHolder.quaternion.copy(handWorld).invert().multiply(this._handWorld);
+    // The racket's origin is the butt of the grip; place it where the Blender grip pose has it.
+    const offsetW = new THREE.Vector3().addScaledVector(this._palmLat, GRIP_BUTT.lat).addScaledVector(this._palmDir, GRIP_BUTT.fwd).addScaledVector(this._palmN, GRIP_BUTT.out);
+    const sc = new THREE.Vector3(); b.RightHand.getWorldScale(sc);
+    this.racketHolder.position.copy(offsetW).applyQuaternion(handWorld.clone().invert()).divideScalar(sc.x);
   }
 }

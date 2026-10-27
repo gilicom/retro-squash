@@ -26,3 +26,6 @@ ref/
 # Blender working files (large binaries)
 tools/blender/*.blend
 tools/blender/*.blend1
+
+# Baked kit textures (embedded in public/models/player.glb)
+tools/blender/textures/

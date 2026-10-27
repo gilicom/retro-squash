@@ -62,9 +62,21 @@ with a wrapped-tape texture, collar and coloured butt cap, slim clear-coated
 graphite shaft with accent bands, open throat with two struts, a bridge and a
 dampener, a teardrop head swept as an aero (wider than deep) tube along a
 Catmull-Rom outline (27 × 20 cm), a bumper strip in the player's colour, and
-a string bed cut to the head shape with a 14 × 18 string texture. The hand
-holds the top of the grip at the group origin; the head is along −y and the
+a string bed cut to the head shape with a 14 × 18 string texture. In both
+rackets the group origin is the butt of the grip; the head is along −y and the
 string normal is +z.
+
+**Grip** (`skinned-player.js`): the solver gives the racket direction (hand
+−y) and the string normal (hand +z). The character's hand is turned so that
+the handle crosses the palm at `GRIP_ANGLE` (18°) above the knuckle line,
+toward the thumb, and the strings face the palm; the butt of the grip is then
+placed at `GRIP_BUTT` in the palm frame (lateral toward the thumb, along the
+fingers, out of the palm), the values measured on the Blender character whose
+fingers are exported already curled around the handle. The palm side of a
+rest pose is detected as the side facing the hips (A-pose and T-pose hands
+hang palm-in / palm-down). The free hand continues the forearm. Stroke
+keyframes keep the racket 55-70° off the forearm, the cocked wrist of a real
+squash grip, never in line with the arm.
 
 **Arm posing** is direction based rather than Euler based: a stroke keyframe
 gives, in the torso's yaw frame, where the elbow is relative to the shoulder

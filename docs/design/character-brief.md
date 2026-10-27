@@ -64,3 +64,18 @@ These match the game's stroke keyframes (docs/RENDERING.md).
   kit modelled and textured in Blender, exported as one GLB per player plus
   one racket GLB. The game's procedural solver drives the rig; no animation
   clips are needed.
+- Build notes (2026-10-27, Blender 5.2 through the MCP connection; scene in
+  `tools/blender/squash-assets.blend`, git-ignored): shirt and shorts are
+  faces of the body mesh (copied UVs, one subdivision, bisect-plane hems and
+  neckline, Solidify) with textures painted by a small numpy rasteriser over
+  the body UVs; shoes are lofted around the foot (super-ellipse sections,
+  parametric UVs, painted texture, separate sole with vertex colours); hair is
+  a sphere cut at an azimuth-based hairline, shrink-wrapped to the scalp and
+  displaced by noise. The right hand is posed around the handle (fingers wrap
+  a cylinder, thumb along the grip) and the pose is applied as the rest pose
+  before export so the GLB carries the grip.
+- Grip (from the coaching chart in `ref/`): the handle crosses the palm from
+  the index knuckle to the heel of the hand, the thumb and index make a V on
+  the top bevel, the index sits forward like a trigger finger, and the butt
+  rests just outside the palm. The racket is held cocked, never in line with
+  the forearm.

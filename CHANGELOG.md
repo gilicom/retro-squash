@@ -21,6 +21,25 @@ All notable changes to this project are documented here. The format follows
   orientations are read from the file. Procedural bodies remain the fallback. Pose viewer
   `model=1` shows the rigged character.
 
+### Changed (character v2)
+- Real squash grip: the fingers are posed in Blender around the handle, which
+  runs diagonally across the palm (18° above the knuckle line) with the thumb
+  along the top bevel and the butt outside the heel of the hand; the grip is
+  baked into the exported rest pose and `skinned-player.js` maps the solver's
+  racket direction and string normal onto the palm with the same geometry.
+- The racket is held cocked in the hand: the stroke keyframes keep it 55-70°
+  off the forearm instead of pointing along the arm.
+- Kit redone with baked textures instead of blocky vertex colours: shirt
+  (2048 px) with shoulder piping, raglan lines, side seams and a chest logo,
+  shorts (1024 px) with a side stripe; clean sleeve, hem and neckline cuts and
+  a thin collar rib. The team colour is applied by recolouring the lime of the
+  texture at load time.
+- Shoes modelled as lofted court shoes (upper with heel tab, swoosh, tongue and
+  laces painted in a texture; white midsole with a lime outsole) instead of
+  extruded foot skin.
+- Hair cap rebuilt: smooth hairline around the ears and nape, tousled clumps.
+- Team colours are now lime (you) and orange (cpu) as in the character brief.
+
 ### Added (assets)
 - Player character built in Blender through the MCP connection: MPFB athletic
   body with a Mixamo rig and a baked skin texture, kit extracted from the body

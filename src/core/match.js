@@ -46,8 +46,8 @@ export class Match {
     const diff = DIFFICULTY[opts.difficulty ?? 'normal'];
 
     this.ball = new Ball();
-    this.human = new Player(0, { speed: HUMAN.speed, reach: HUMAN.reach, fitness: HUMAN.fitness, color: '#2f7df6', name: 'you' });
-    this.cpu = new Player(1, { speed: diff.speed, reach: diff.reach, fitness: diff.fitness, color: '#e5483c', name: 'cpu' });
+    this.human = new Player(0, { speed: HUMAN.speed, reach: HUMAN.reach, fitness: HUMAN.fitness, color: '#c6ff2e', name: 'you' });
+    this.cpu = new Player(1, { speed: diff.speed, reach: diff.reach, fitness: diff.fitness, color: '#ff8a3d', name: 'cpu' });
     this.ai = new AIController(this.cpu, diff, this.rand);
     this.players = [this.human, this.cpu];
     this.referee = new Referee({ bestOf: this.bestOf });
