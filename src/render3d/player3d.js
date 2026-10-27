@@ -36,45 +36,49 @@ const v3 = (x, y, z) => new THREE.Vector3(x, y, z).normalize();
 const nlerp = (a, b, t, out) => out.copy(a).lerp(b, t).normalize();
 
 const VEC_KEYS = ['E', 'W', 'R', 'N', 'LE', 'LW'];
-const NUM_KEYS = ['yaw', 'pitch', 'drop', 'wide', 'knee', 'step'];
+const NUM_KEYS = ['yaw', 'shoulders', 'pitch', 'drop', 'wide', 'knee', 'step'];
 
 /**
  * Stroke keyframes (forehand, right-handed). Torso yaw frame: x right, y up,
  * z back (-z toward the front wall).
  *   E elbow dir from shoulder, W wrist dir from elbow, R racket dir, N string normal,
- *   LE/LW free arm, yaw body turn (negative = right wall), pitch forward lean,
+ *   LE/LW free arm, yaw hip turn (negative = right wall; the body faces the side wall
+ *   at 90° for the stroke), shoulders extra shoulder turn beyond the hips, pitch forward lean,
  *   drop hip drop (m), wide extra foot spread, knee extra bend (both knees),
  *   step front-foot-forward amount (front foot = opposite the racket side).
  */
 const FOREHAND = [
-  // 1. preparation (frame 1)
-  { t: 0.0, E: v3(0.9, 0.15, 0.35), W: v3(0.05, 0.95, 0.3), R: v3(-0.15, 0.95, 0.25), N: v3(-0.7, 0.05, -0.7), LE: v3(0.3, -0.6, -0.75), LW: v3(0.4, -0.45, -0.8), yaw: -1.25, pitch: 0.22, drop: 0.06, wide: 0.12, knee: 0.3, step: 0.8 },
-  // 2. contact (frame 2)
-  { t: 0.24, E: v3(0.55, -0.75, -0.35), W: v3(0.6, -0.5, -0.6), R: v3(0.9, -0.05, -0.45), N: v3(0.1, 0.25, -0.95), LE: v3(-0.6, -0.1, 0.8), LW: v3(-0.5, -0.3, 0.8), yaw: -0.6, pitch: 0.5, drop: 0.14, wide: 0.15, knee: 0.55, step: 1.0 },
-  // 3. follow-through (frame 3)
-  { t: 0.62, E: v3(-0.2, 0.35, -0.85), W: v3(-0.5, 0.8, -0.3), R: v3(-0.3, 0.85, 0.4), N: v3(0.6, 0.3, -0.7), LE: v3(-0.45, -0.4, 0.75), LW: v3(-0.3, -0.5, 0.8), yaw: 0.2, pitch: 0.25, drop: 0.05, wide: 0.1, knee: 0.3, step: 0.7 },
-  // ready
-  { t: 1.0, E: v3(0.35, -0.85, -0.35), W: v3(0.2, 0.35, -0.9), R: v3(0.05, 0.85, -0.5), N: v3(-0.7, 0, -0.7), LE: v3(-0.4, -0.8, -0.4), LW: v3(-0.1, -0.2, -0.95), yaw: 0, pitch: 0.14, drop: 0, wide: 0, knee: 0, step: 0 },
+  // 1. preparation (frame 1): the whole body faces the right side wall (90°), shoulders turned a little further.
+  { t: 0.0, E: v3(0.9, 0.15, 0.35), W: v3(0.05, 0.95, 0.3), R: v3(-0.15, 0.95, 0.25), N: v3(-0.7, 0.05, -0.7), LE: v3(0.3, -0.6, -0.75), LW: v3(0.4, -0.45, -0.8), yaw: -1.57, shoulders: -0.3, pitch: 0.22, drop: 0.06, wide: 0.12, knee: 0.3, step: 0.8 },
+  // 2. contact (frame 2): hips still side-on, shoulders opening toward the front wall.
+  { t: 0.24, E: v3(0.55, -0.75, -0.35), W: v3(0.6, -0.5, -0.6), R: v3(0.9, -0.05, -0.45), N: v3(0.1, 0.25, -0.95), LE: v3(-0.6, -0.1, 0.8), LW: v3(-0.5, -0.3, 0.8), yaw: -1.2, shoulders: 0.35, pitch: 0.5, drop: 0.06, wide: 0.15, knee: 0.45, step: 1.0 },
+  // 3. follow-through (frame 3): body rotates to face the front wall.
+  { t: 0.62, E: v3(-0.2, 0.35, -0.85), W: v3(-0.5, 0.8, -0.3), R: v3(-0.3, 0.85, 0.4), N: v3(0.6, 0.3, -0.7), LE: v3(-0.45, -0.4, 0.75), LW: v3(-0.3, -0.5, 0.8), yaw: -0.25, shoulders: 0.35, pitch: 0.25, drop: 0.05, wide: 0.1, knee: 0.3, step: 0.7 },
+  // ready: square to the front wall, racket up in front, free hand near the racket throat, knees bent, feet wide.
+  { t: 1.0, E: v3(0.35, -0.85, -0.35), W: v3(0.2, 0.35, -0.9), R: v3(0.05, 0.85, -0.5), N: v3(-0.7, 0, -0.7), LE: v3(-0.3, -0.8, -0.5), LW: v3(0.55, 0.15, -0.8), yaw: 0, shoulders: 0, pitch: 0.14, drop: 0, wide: 0.08, knee: 0.1, step: 0 },
 ];
 
 /** Mirror a forehand keyframe across the body for the backhand (racket stays in the right hand). */
 function mirror(k) {
   const m = (v) => v3(-v.x, v.y, v.z);
+  const prep = k.t === 0;
   return {
     t: k.t,
-    // Racket arm crosses the body: elbow in front of the chest, racket above the left shoulder.
-    E: k.t === 0 ? v3(-0.35, 0.4, 0.2) : m(k.E),
-    W: k.t === 0 ? v3(-0.25, 0.9, 0.35) : m(k.W),
-    R: k.t === 0 ? v3(-0.3, 0.8, 0.5) : m(k.R),
-    N: m(k.N),
-    LE: m(k.LE), LW: m(k.LW),
-    yaw: -k.yaw, pitch: k.pitch, drop: k.drop, wide: k.wide, knee: k.knee, step: k.step,
+    // Preparation (backhand frames): body faces the left wall, elbow bent across the chest at
+    // shoulder height, racket head up and back behind the head, free arm bent in front.
+    E: prep ? v3(-0.25, 0.3, 0.1) : m(k.E),
+    W: prep ? v3(-0.1, 0.85, 0.5) : m(k.W),
+    R: prep ? v3(-0.2, 0.6, 0.75) : m(k.R),
+    N: prep ? v3(0.75, 0.2, -0.6) : m(k.N),
+    LE: prep ? v3(-0.5, -0.5, -0.7) : m(k.LE),
+    LW: prep ? v3(0.4, 0.2, -0.85) : m(k.LW),
+    yaw: -k.yaw, shoulders: -k.shoulders, pitch: k.pitch, drop: k.drop, wide: k.wide, knee: k.knee, step: k.step,
   };
 }
 const BACKHAND = FOREHAND.map(mirror);
 
 function makePose() {
-  const p = { yaw: 0, pitch: 0, drop: 0, wide: 0, knee: 0, step: 0 };
+  const p = { yaw: 0, shoulders: 0, pitch: 0, drop: 0, wide: 0, knee: 0, step: 0 };
   for (const k of VEC_KEYS) p[k] = new THREE.Vector3();
   return p;
 }
@@ -241,26 +245,32 @@ export class PlayerModel {
       if (this.prep > 0.01) {
         sampleKeys(this.prepSide > 0 ? FOREHAND : BACKHAND, 0, this.prepPose);
         // While running the body cannot be fully sideways: keep the arm prepared, soften the body.
-        this.prepPose.yaw *= 1 - 0.55 * run;
+        this.prepPose.yaw *= 1 - 0.6 * run;
+        this.prepPose.shoulders *= 1 - 0.6 * run;
         this.prepPose.step *= 1 - run;
         this.prepPose.wide *= 1 - run;
         this.prepPose.knee *= 1 - 0.5 * run;
         blendPose(pose, this.prepPose, this.prep);
       }
     }
-    // Reach for the ball height at contact: lower balls pull the arm and the body down.
+    // Reach for the ball height at contact: low balls pull the arm and the body down,
+    // high balls (volleys) bring the extended arm up to shoulder height with the body upright.
     const h = clamp(ball.y, 0.1, 2.0);
     const stroke = swingT >= 0 ? Math.sin(Math.PI * clamp(swingT / 0.62, 0, 1)) : 0;
-    const lowBall = clamp((1.0 - h) / 0.9, -0.6, 1) * stroke;
-    pose.E.y -= lowBall * 0.6; pose.E.normalize();
-    pose.W.y -= lowBall * 0.6; pose.W.normalize();
-    pose.R.y -= lowBall * 0.25; pose.R.normalize();
+    const lowBall = clamp((1.0 - h) / 0.9, 0, 1) * stroke;    // 1 = ball on the floor
+    const highBall = clamp((h - 1.0) / 0.6, 0, 1) * stroke;   // 1 = head-high volley
+    pose.E.y += highBall * 0.8 - lowBall * 0.6; pose.E.normalize();
+    pose.W.y += highBall * 0.95 - lowBall * 0.6; pose.W.normalize();
+    pose.R.y += highBall * 0.35 - lowBall * 0.25; pose.R.normalize();
+    // A volley is played standing taller.
+    const tall = 1 - 0.6 * highBall;
+    pose.pitch *= tall; pose.drop *= tall; pose.knee *= tall;
 
     // ------------------------------------------------ facing and body height
     let face = 0;
     if (bwd > 0.1) face = -Math.sign(dirX || 1) * 0.5 * bwd;
     if (fwd > 0.1) face += -dirX * 0.25 * fwd;
-    face += pose.yaw * 0.55;
+    face += pose.yaw;
     this.facing = ease(this.facing, face, dt, 9);
     r.rotation.y = this.facing;
 
@@ -272,7 +282,7 @@ export class PlayerModel {
     this.hips.position.y = 0.95 - stanceDrop - run * 0.05 - lunge * 0.12 - pose.drop - kneeDrop - lowBall * 0.06 + bob + breathe + hop - landed * 0.03;
 
     this.torso.rotation.set(0, 0, 0);
-    this.torso.rotation.y = pose.yaw * 0.45;
+    this.torso.rotation.y = pose.shoulders;
     this.torso.rotation.x = -(pose.pitch + fwd * 0.2 + bwd * 0.05 + lunge * 0.12 + lowBall * 0.2);
     this.torso.rotation.z = -lat * 0.18 - this.lungeX * lunge * 0.15;
     // Head: level, eyes on the ball.
@@ -322,7 +332,7 @@ export class PlayerModel {
           // Back leg: bent too during the stroke (both knees bend), straighter in a running lunge.
           flex = lerp(flex, -0.35 * Math.max(0.3, -this.lungeZ) - 0.05, lunge);
           abd = lerp(abd, -this.lungeX * 0.15 + ls * 0.12, lunge);
-          bend = lerp(bend, inStroke ? -0.8 : -0.25, lunge);
+          bend = lerp(bend, inStroke ? -0.55 : -0.25, lunge);
           foot.rotation.x = lerp(foot.rotation.x, -0.6, lunge);
         }
       }

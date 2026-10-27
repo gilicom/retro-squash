@@ -28,6 +28,11 @@ All notable changes to this project are documented here. The format follows
   band, number), shoulder caps, neck, head with eyes, ears and hair, tapered
   limbs with joint spheres, wrist bands, socks and shoes; players differ in
   number, skin and hair.
+- Strokes are played side-on: hips turn 90° to the side wall (right for a
+  forehand, left for a backhand) in preparation and stay side-on through
+  contact while the shoulders open; volleys are played standing taller with the
+  arm extended at shoulder height; the ready stance has the free hand on the
+  racket throat.
 - Forehand retimed to three reference frames: frame-1 preparation held while
   running to the ball (backhand mirrored on the other side), both knees bent
   deep at contact, high follow-through on the opposite side.

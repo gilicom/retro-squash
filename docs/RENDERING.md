@@ -66,13 +66,15 @@ filmed from behind (kept out of the repository):
 
 | Phase (t) | Forehand pose |
 | --- | --- |
-| 0 preparation (frame 1) | Body turned ~70° to the right wall, left foot forward toward the front wall and right foot back with the heel up, knees bent; elbow at shoulder height out to the side, forearm vertical, racket head straight up above the shoulder; free hand pointing forward-down at the ball; eyes on the ball. |
-| 0.24 contact (frame 2) | **Both** knees bent deep, hips ~55 cm, body bent ~45° over the front (left) foot; arm extended to the ball at ankle height, racket level with the ball (lower balls pull the arm and the body further down), strings facing the front wall; free arm trailing behind. |
-| 0.62 follow-through (frame 3) | Shoulders rotate to face the front wall, racket comes up high on the left side with the elbow bent, weight on the front foot, back leg trailing; free arm tucked back. |
-| 1 ready | Racket up in front, knees soft. |
+| 0 preparation (frame 1) | Hips and feet turned **90° to the right side wall**, shoulders a little further; left foot forward toward the front wall and right foot back with the heel up, knees bent; elbow at shoulder height out to the side, forearm vertical, racket head straight up above the shoulder; free hand pointing forward-down at the ball; eyes on the ball. |
+| 0.24 contact (frame 2) | Hips still side-on, shoulders opening to the front wall; **both** knees bent deep, hips ~55 cm, body bent ~45° over the front (left) foot; arm extended to the ball at ankle height, racket level with the ball, strings facing the front wall; free arm trailing behind. Lower balls pull the arm and the body further down; head-high balls (volleys) are played standing taller with the extended arm at shoulder height. |
+| 0.62 follow-through (frame 3) | Body rotates to face the front wall, racket comes up high on the left side with the elbow bent, weight on the front foot, back leg trailing; free arm tucked back. |
+| 1 ready | Square to the front wall, racket up in front with the free hand near the throat, knees bent, feet wide. |
 
-The backhand mirrors the set, with the racket prepared above the left
-shoulder. The swing lasts 0.5 s; the ball is launched at t = 0 by the
+The backhand mirrors the set and turns the body 90° to the **left** wall; its
+preparation comes from backhand volley frames: elbow bent across the chest at
+shoulder height, racket head up and back behind the head, free arm bent in
+front. The swing lasts 0.5 s; the ball is launched at t = 0 by the
 simulation, so contact at t = 0.24 is 0.12 s later.
 
 **Preparation while running**: as soon as it is a player's ball (the game
