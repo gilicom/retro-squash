@@ -130,6 +130,35 @@ smoothed with an exponential approach so poses blend instead of snapping.
 Joint sign conventions are documented at the top of `player3d.js`; knees
 only ever bend backwards.
 
+### Rigged character (`skinned-player.js`)
+
+When `public/models/Xbot.glb` loads, the procedural bodies are replaced by a
+rigged glTF character on the standard **Mixamo** skeleton (bones named
+`mixamorig<Name>`, T-pose, identity bone orientations, facing +z). The
+procedural `PlayerModel` keeps running as an invisible **solver**, built
+with the character's own bone lengths (thigh, shin, ankle height, hip
+width, hip height read from the rest pose) so the footstep IK plants the
+feet where the mesh's feet are.
+
+After each solver update every body segment yields a world direction and a
+bend axis (knee/elbow axis = cross of the two segments, with a fallback
+when straight), and the matching bone is rotated so that its rest direction
+and rest bend axis land on them: `world = frame(solved) · frame(rest)⁻¹ ·
+restWorld`, applied top-down so each local rotation is relative to the
+parent's actual rotation. Hips take the solver's position and facing; Spine
+takes the torso, Head the head, feet keep flat and follow the solver's foot
+frame. Untouched bones (clavicles, neck, upper spine, toes, fingers) keep
+their rest pose; the racket-hand fingers are curled once around the grip.
+The racket hangs from the right hand bone with the correction that makes
+its world orientation equal the solver's hand (handle along the forearm,
+strings facing the solver's palm normal).
+
+Any character on the Mixamo rig works: drop a glTF/GLB into
+`public/models/` and point `CHARACTER_URL` in `renderer3d.js` at it.
+Xbot (three.js test mannequin, MIT) is the bundled stand-in; a Mixamo or
+Ready Player Me human gives a realistic player with clothing textures. If
+the file is missing or fails to load, the procedural bodies stay.
+
 ### Ball and effects (`renderer3d.js`)
 
 - Ball: 5 cm black club ball with a soft rubber clearcoat, casts a shadow,

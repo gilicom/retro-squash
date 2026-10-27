@@ -40,11 +40,15 @@ const nlerp = (a, b, t, out) => out.copy(a).lerp(b, t).normalize();
 const VEC_KEYS = ['E', 'W', 'R', 'N', 'LE', 'LW'];
 const NUM_KEYS = ['yaw', 'shoulders', 'pitch', 'drop', 'wide', 'knee', 'step'];
 
-/** Hip joint lateral offset and foot stance half-width (m). */
-const HIP_X = 0.1;
+/** Foot stance half-width (m). */
 const STANCE_HALF = 0.14;
-/** Ankle height above the floor when the foot is flat (m). */
-const ANKLE = 0.035;
+
+/**
+ * Default rig dimensions (m): the procedural body. A skinned character
+ * passes its own bone lengths so the leg IK plants its feet correctly.
+ * @typedef {{hipX:number, hipsY:number, thigh:number, shin:number, ankle:number}} RigDims
+ */
+export const DEFAULT_DIMS = Object.freeze({ hipX: 0.1, hipsY: 0.95, thigh: THIGH, shin: SHIN, ankle: 0.035 });
 
 /**
  * Stroke keyframes (forehand, right-handed). Torso yaw frame: x right, y up,
@@ -113,8 +117,10 @@ export class PlayerModel {
   /**
    * @param {number} color jersey colour
    * @param {{number?:number, skin?:number, hair?:number}} [look]
+   * @param {Partial<RigDims>} [dims] rig dimensions (defaults to the procedural body)
    */
-  constructor(color, look = {}) {
+  constructor(color, look = {}, dims = {}) {
+    this.dims = { ...DEFAULT_DIMS, ...dims };
     const body = buildBody({ color, ...look });
     this.root = body.root;
     this.hips = body.hips;
@@ -200,10 +206,10 @@ export class PlayerModel {
     const d = this._tmp.subVectors(foot, hipLocal);
     let L = d.length();
     if (L < 1e-4) { L = 1e-4; d.set(0, -1e-4, 0); }
-    const reach = clamp(L, 0.2, THIGH + SHIN - 0.01);
+    const reach = clamp(L, 0.2, this.dims.thigh + this.dims.shin - 0.01);
     const dn = this._tmp2.copy(d).divideScalar(L);
     // Knee angle from the law of cosines; the thigh deviates from the hip->ankle line by alpha, toward the front.
-    const a = THIGH, b = SHIN;
+    const a = this.dims.thigh, b = this.dims.shin;
     const cosAlpha = clamp((a * a + reach * reach - b * b) / (2 * a * reach), -1, 1);
     const alpha = Math.acos(cosAlpha);
     const f = this._tmp3.set(0, 0, -1); // knee points forward
@@ -398,7 +404,7 @@ export class PlayerModel {
     // Lower the hips when the feet are far apart so the legs can reach (lunge).
     const spread = Math.hypot(this.feet[0].pos.x - this.feet[1].pos.x, this.feet[0].pos.z - this.feet[1].pos.z);
     const spreadDrop = clamp((spread - 0.5) * 0.35, 0, 0.22);
-    this.hips.position.y = 0.95 - stanceDrop - run * 0.04 - pose.drop - kneeDrop - spreadDrop - lowBall * 0.05 + stepBob + breathe + hop - landed * 0.03;
+    this.hips.position.y = this.dims.hipsY - stanceDrop - run * 0.04 - pose.drop - kneeDrop - spreadDrop - lowBall * 0.05 + stepBob + breathe + hop - landed * 0.03;
 
     this.torso.rotation.set(0, 0, 0);
     this.torso.rotation.y = pose.shoulders;
@@ -416,8 +422,8 @@ export class PlayerModel {
       const wx = ft.pos.x - r.position.x, wz = ft.pos.z - r.position.z;
       const localX = wx * cosF - wz * sinF;
       const localZ = wx * sinF + wz * cosF;
-      const hipLocal = this._e.set(leg.side * HIP_X, this.hips.position.y, 0);
-      const footLocal = this._w.set(localX, ft.pos.y + ANKLE, localZ);
+      const hipLocal = this._e.set(leg.side * this.dims.hipX, this.hips.position.y, 0);
+      const footLocal = this._w.set(localX, ft.pos.y + this.dims.ankle, localZ);
       // Toes down while the foot swings; back heel up in a stroke stance.
       const frontFoot = leg.side === -strokeSide;
       let toe = ft.swing >= 0 ? 0.35 * Math.sin(Math.PI * ft.swing) : 0;

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Skeleton inspector</title>
+  <style>body { margin: 0; background: #202428; color: #ddd; font: 12px/1.4 monospace; padding: 12px; white-space: pre; }</style>
+</head>
+<body>
+  <div id="out">loading...</div>
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+    const out = document.getElementById('out');
+    const q = new URLSearchParams(location.search);
+    const url = q.get('model') || '/models/Xbot.glb';
+    new GLTFLoader().load(url, (gltf) => {
+      const scene = gltf.scene;
+      scene.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(scene);
+      const lines = [`model ${url}`, `bbox min ${box.min.toArray().map((v) => v.toFixed(3))} max ${box.max.toArray().map((v) => v.toFixed(3))}`, `animations ${gltf.animations.map((a) => a.name).join(', ')}`];
+      const p = new THREE.Vector3(), s = new THREE.Vector3(), qq = new THREE.Quaternion();
+      scene.traverse((o) => {
+        if (o.isSkinnedMesh) lines.push(`skinnedMesh ${o.name} bones=${o.skeleton.bones.length} verts=${o.geometry.attributes.position.count} material=${o.material.name || o.material.type}`);
+        if (o.isBone) {
+          o.getWorldPosition(p); o.getWorldScale(s); o.getWorldQuaternion(qq);
+          const e = new THREE.Euler().setFromQuaternion(qq);
+          lines.push(`bone ${o.name} parent=${o.parent && o.parent.name} pos=${p.toArray().map((v) => v.toFixed(3))} scale=${s.x.toFixed(3)} euler=${[e.x, e.y, e.z].map((v) => (v * 180 / Math.PI).toFixed(0))}`);
+        }
+        if (!o.isBone && !o.isMesh && o !== scene) lines.push(`node ${o.name} type=${o.type} scale=${o.scale.x.toFixed(3)}`);
+      });
+      out.textContent = lines.join('\n');
+    }, undefined, (err) => { out.textContent = 'error ' + err; });
+  </script>
+</body>
+</html>

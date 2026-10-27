@@ -10,6 +10,7 @@
  *   cam    camera azimuth in degrees around the player (0 = from the front wall, 90 = from the right)
  *   lunge  0..1 force a lunge (default: from the pose)
  *   run    0..1 running intensity (default 0)
+ *   model  1 = show the rigged glTF character driven by the same solver
  *
  * The page renders once per load (no animation loop), so it also works in
  * throttled background tabs. Call window.render(params) from the console to
@@ -17,6 +18,7 @@
  */
 import * as THREE from 'three';
 import { PlayerModel } from '../src/render3d/player3d.js';
+import { SkinnedPlayer, loadCharacter } from '../src/render3d/skinned-player.js';
 import { COURT } from '../src/config/court.js';
 
 // The model is placed on the court's centre line so the court-half logic
@@ -46,8 +48,12 @@ key.castShadow = true;
 key.shadow.mapSize.set(1024, 1024);
 scene.add(key);
 
-const model = new PlayerModel(0x2f7df6);
+let model = new PlayerModel(0x2f7df6);
 scene.add(model.root);
+const useModel = new URLSearchParams(location.search).get('model') === '1';
+const ready = useModel
+  ? loadCharacter('/models/Xbot.glb').then((gltf) => { scene.remove(model.root); model = new SkinnedPlayer(gltf, 0x2f7df6); scene.add(model.root); })
+  : Promise.resolve();
 const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffffff }));
 scene.add(ballMesh);
 
@@ -64,7 +70,8 @@ function fakePlayer(o) {
   return { x: 0, z: 0, vx: 0, vz: 0, targetX: 0, targetZ: 0, speed: 4.4, reach: 1.1, swing: 0, swingSide: 1, runPhase: 1.2, stamina: 1, frozen: false, ...o };
 }
 
-window.render = function render(o = {}) {
+window.render = async function render(o = {}) {
+  await ready;
   const p = { ...params(), ...o };
   const w = canvas.clientWidth, h = canvas.clientHeight;
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));

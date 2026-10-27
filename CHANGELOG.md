@@ -13,6 +13,13 @@ All notable changes to this project are documented here. The format follows
 - Demo mode: "Watch a demo" plays computer vs computer with auto-serve and
   auto-continue; a DEMO badge shows in the HUD.
 
+### Added (characters)
+- Rigged glTF characters on the Mixamo skeleton, driven by the procedural
+  solver through direction retargeting (`skinned-player.js`); the bundled
+  three.js Xbot mannequin is the stand-in, any Mixamo/Ready Player Me human
+  can replace it. Procedural bodies remain the fallback. Pose viewer
+  `model=1` shows the rigged character.
+
 ### Changed
 - After a rally ends (tin, out, double bounce) the ball keeps bouncing under
   the same physics until it dies, instead of freezing at the decision.
