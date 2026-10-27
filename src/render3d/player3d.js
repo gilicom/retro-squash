@@ -74,13 +74,13 @@ function mirror(k) {
     t: k.t,
     // Preparation (backhand frames): body faces the left wall, elbow bent across the chest at
     // shoulder height, racket head up and back behind the head, free arm bent in front.
-    E: prep ? v3(-0.5, 0.25, 0.05) : m(k.E),
-    W: prep ? v3(-0.3, 0.8, 0.5) : m(k.W),
-    R: prep ? v3(-0.35, 0.5, 0.78) : m(k.R),
+    E: prep ? v3(-0.42, 0.3, -0.55) : m(k.E),
+    W: prep ? v3(-0.3, 0.8, 0.3) : m(k.W),
+    R: prep ? v3(-0.3, 0.55, 0.75) : m(k.R),
     N: prep ? v3(0.75, 0.2, -0.6) : m(k.N),
     LE: prep ? v3(-0.5, -0.5, -0.7) : m(k.LE),
     LW: prep ? v3(0.4, 0.2, -0.85) : m(k.LW),
-    yaw: -k.yaw, shoulders: -k.shoulders, pitch: k.pitch, drop: k.drop, wide: k.wide, knee: k.knee, step: k.step,
+    yaw: -k.yaw, shoulders: prep ? 0.55 : -k.shoulders, pitch: k.pitch, drop: k.drop, wide: k.wide, knee: k.knee, step: k.step,
   };
 }
 const BACKHAND = FOREHAND.map(mirror);
