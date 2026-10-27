@@ -136,6 +136,7 @@ export class SkinnedPlayer {
     const thigh = P.LeftUpLeg.distanceTo(P.LeftLeg);
     const shin = P.LeftLeg.distanceTo(P.LeftFoot);
     const ankle = P.LeftFoot.y - Math.min(P.LeftToeBase.y, 0);
+    const toeLen = Math.hypot(P.LeftToeBase.x - P.LeftFoot.x, P.LeftToeBase.z - P.LeftFoot.z);
     const hipX = Math.abs(P.LeftUpLeg.x);
     const hipsY = P.Hips.y;
     // Rest facing: left is from the right hip to the left hip, forward = left x up.
@@ -144,7 +145,7 @@ export class SkinnedPlayer {
     this.fwdRest = FWD_REST;
 
     // Invisible solver with this character's leg geometry.
-    this.solver = new PlayerModel(color, look, { thigh, shin, ankle, hipX, hipsY });
+    this.solver = new PlayerModel(color, look, { thigh, shin, ankle, toeLen, hipX, hipsY });
     this.solver.root.visible = false;
 
     // Rest frames: direction (bone -> child) and bend axis / normal in the rest pose.
@@ -322,6 +323,7 @@ export class SkinnedPlayer {
 
     // Arms: direction = pivot -y; bend axis = cross(upper, fore), fallback perpendicular to the arm in the forward plane.
     const fwdW = new THREE.Vector3(0, 0, -1).applyQuaternion(s.root.quaternion);
+    const torsoWorld = s.torso.getWorldQuaternion(new THREE.Quaternion());
     for (const [i, side, restAxisSign] of [[0, 'Left', -1], [1, 'Right', 1]]) {
       const arm = s.arms[i];
       const dU = new THREE.Vector3(0, -1, 0).applyQuaternion(arm.shoulder.getWorldQuaternion(new THREE.Quaternion()));
@@ -335,12 +337,20 @@ export class SkinnedPlayer {
       // Hand. Racket hand: the handle (solver hand -y, toward the racket head) runs across the
       // palm at GRIP_ANGLE from the knuckle line (squash grip: the V between thumb and index on
       // the top bevel, butt outside the heel of the hand) and the strings face the palm (solver
-      // hand +z). Free hand: fingers continue the forearm, palm facing the solver's -z.
+      // hand +z). Free hand: fingers continue the forearm, palm facing down and toward the body.
       const qH = arm.hand.getWorldQuaternion(new THREE.Quaternion());
       const R = new THREE.Vector3(0, -1, 0).applyQuaternion(qH);
       const N = new THREE.Vector3(0, 0, 1).applyQuaternion(qH);
       const palm = this.palm[side];
-      const Np = side === 'Right' ? N : N.clone().negate();
+      // Free hand: the palm faces down and toward the body, whatever the solver's elbow frame does.
+      let Np = N;
+      if (side !== 'Right') {
+        const bodyRight = new THREE.Vector3(1, 0, 0).applyQuaternion(torsoWorld);
+        Np = new THREE.Vector3(0, -1, 0).addScaledVector(bodyRight, 0.7);
+        Np.addScaledVector(R, -Np.dot(R));
+        if (Np.lengthSq() < 1e-4) Np.copy(bodyRight).addScaledVector(R, -bodyRight.dot(R));
+        Np.normalize();
+      }
       const e2 = new THREE.Vector3().crossVectors(R, Np).multiplyScalar(palm.s);   // across the handle, in the palm plane
       const a = side === 'Right' ? GRIP_ANGLE : Math.PI / 2;
       const dH = new THREE.Vector3().addScaledVector(R, Math.sin(a)).addScaledVector(e2, Math.cos(a)).normalize();

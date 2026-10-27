@@ -46,9 +46,9 @@ const STANCE_HALF = 0.14;
 /**
  * Default rig dimensions (m): the procedural body. A skinned character
  * passes its own bone lengths so the leg IK plants its feet correctly.
- * @typedef {{hipX:number, hipsY:number, thigh:number, shin:number, ankle:number}} RigDims
+ * @typedef {{hipX:number, hipsY:number, thigh:number, shin:number, ankle:number, toeLen:number}} RigDims
  */
-export const DEFAULT_DIMS = Object.freeze({ hipX: 0.1, hipsY: 0.95, thigh: THIGH, shin: SHIN, ankle: 0.035 });
+export const DEFAULT_DIMS = Object.freeze({ hipX: 0.1, hipsY: 0.95, thigh: THIGH, shin: SHIN, ankle: 0.035, toeLen: 0.12 });
 
 /**
  * Stroke keyframes (forehand, right-handed). Torso yaw frame: x right, y up,
@@ -77,15 +77,16 @@ function mirror(k) {
   const prep = k.t === 0;
   return {
     t: k.t,
-    // Preparation (backhand frames): body faces the left wall, elbow bent across the chest at
-    // shoulder height, racket head up and back behind the head, free arm bent in front.
-    E: prep ? v3(-0.6, 0.3, -0.62) : m(k.E),
-    W: prep ? v3(-0.35, 0.8, 0.22) : m(k.W),
-    R: prep ? v3(-0.1, 0.3, 0.95) : m(k.R),
-    N: prep ? v3(0.75, 0.2, -0.6) : m(k.N),
+    // Preparation (backhand frames): hips turned 135° toward the left wall (45° past side-on) with
+    // the shoulders a little further, elbow pointing at the front wall across the chest, racket
+    // hand beside the left shoulder clear of the head, racket head up and back, free arm in front.
+    E: prep ? v3(-0.45, -0.12, -0.88) : m(k.E),
+    W: prep ? v3(-0.85, -0.05, 0.5) : m(k.W),
+    R: prep ? v3(-0.25, 0.5, 0.85) : m(k.R),
+    N: prep ? v3(0.8, 0.3, -0.4) : m(k.N),
     LE: prep ? v3(-0.5, -0.5, -0.7) : m(k.LE),
     LW: prep ? v3(0.4, 0.2, -0.85) : m(k.LW),
-    yaw: -k.yaw, shoulders: prep ? 1.07 : -k.shoulders, pitch: k.pitch, drop: k.drop, wide: k.wide, knee: k.knee, step: k.step,
+    yaw: prep ? 2.36 : -k.yaw, shoulders: prep ? 0.55 : -k.shoulders, pitch: k.pitch, drop: k.drop, wide: k.wide, knee: k.knee, step: k.step,
   };
 }
 const BACKHAND = FOREHAND.map(mirror);
@@ -158,6 +159,7 @@ export class PlayerModel {
 
     this._q = new THREE.Quaternion();
     this._q2 = new THREE.Quaternion();
+    this._wr = new THREE.Vector3();
     this._m = new THREE.Matrix4();
     this._x = new THREE.Vector3();
     this._y = new THREE.Vector3();
@@ -183,7 +185,14 @@ export class PlayerModel {
     const ax = this._ax;
     E = this._e.copy(E).applyAxisAngle(ax, pitch);
     W = this._w.copy(W).applyAxisAngle(ax, pitch);
-    if (R) { R = this._r.copy(R).applyAxisAngle(ax, pitch); N = this._n.copy(N).applyAxisAngle(ax, pitch); }
+    if (R) {
+      R = this._r.copy(R).applyAxisAngle(ax, pitch);
+      N = this._n.copy(N).applyAxisAngle(ax, pitch);
+      // The strings are the same on both faces, but the palm is not: a right hand holding the racket
+      // has its palm on the side of -(forearm x racket), so keep N (the palm side) there and never
+      // let a keyframe turn the hand over.
+      if (this._wr.crossVectors(W, R).dot(N) > 0) N.negate();
+    }
     const qS = this._dirQuat(E, arm.shoulder.quaternion);
     const qW = this._dirQuat(W, this._q);
     arm.elbow.quaternion.copy(qS).invert().multiply(qW);
@@ -411,11 +420,23 @@ export class PlayerModel {
     this.torso.rotation.y = pose.shoulders;
     this.torso.rotation.x = -(pose.pitch + fwd * 0.2 + bwd * 0.05 + lunge * 0.12 + lowBall * 0.2);
     this.torso.rotation.z = -lat * 0.18 - this.lungeX * lunge * 0.15;
-    this.head.rotation.x = -this.torso.rotation.x * 0.85 - (ball.inPlay ? 0.4 * clamp((1.3 - h), 0, 1) : 0);
-    // Eyes on the ball when it is ours; while waiting on the T, watch the opponent to read the shot.
+    // Eyes on the ball when it is ours, before and through the stroke; while waiting on the T, watch the
+    // opponent to read the shot. Yaw then pitch from the eyes toward the target (the eyes do the rest).
+    this.head.rotation.order = 'YXZ';
     const watch = ball.inPlay && !myTurn && opponent && swingT < 0 ? opponent : ball;
-    const lookYaw = Math.atan2(-(watch.x - p.x), -(watch.z - p.z) || 0.01);
-    this.head.rotation.y = ball.inPlay ? clamp(lookYaw * (watch === ball ? 0.5 : 0.85) - this.facing - this.torso.rotation.y, -1.0, 1.0) : 0;
+    if (ball.inPlay) {
+      const dx = watch.x - p.x, dz = watch.z - p.z;
+      const eyeY = this.hips.position.y + 0.62;
+      const dy = watch === ball ? ball.y - eyeY : 0;
+      const horiz = Math.hypot(dx, dz) || 0.01;
+      let relYaw = Math.atan2(-dx, -dz) - this.facing - this.torso.rotation.y;
+      relYaw = Math.atan2(Math.sin(relYaw), Math.cos(relYaw));
+      this.head.rotation.y = clamp(relYaw * (watch === ball ? 0.9 : 0.85), -1.25, 1.25);
+      this.head.rotation.x = clamp(-this.torso.rotation.x * 0.85 + Math.atan2(dy, horiz) * 0.9, -0.95, 0.6);
+    } else {
+      this.head.rotation.y = 0;
+      this.head.rotation.x = -this.torso.rotation.x * 0.85;
+    }
 
     // ------------------------------------------------ legs (IK to the feet)
     const cosF = Math.cos(this.facing), sinF = Math.sin(this.facing);
@@ -427,11 +448,12 @@ export class PlayerModel {
       const localX = wx * cosF - wz * sinF;
       const localZ = wx * sinF + wz * cosF;
       const hipLocal = this._e.set(leg.side * this.dims.hipX, this.hips.position.y, 0);
-      const footLocal = this._w.set(localX, ft.pos.y + this.dims.ankle, localZ);
       // Toes down while the foot swings; back heel up in a stroke stance.
       const frontFoot = leg.side === -strokeSide;
       let toe = ft.swing >= 0 ? 0.35 * Math.sin(Math.PI * ft.swing) : 0;
       if (!frontFoot && (pose.step > 0.3 || lunge > 0.3)) toe += 0.45 * Math.max(pose.step, lunge);
+      // The foot pivots about the ankle, so a lifted heel raises the ankle by the toe lever; the toes stay on the floor.
+      const footLocal = this._w.set(localX, ft.pos.y + this.dims.ankle + this.dims.toeLen * Math.sin(toe), localZ);
       this._poseLeg(leg, hipLocal, footLocal, toe);
     }
 

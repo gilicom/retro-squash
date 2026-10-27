@@ -20,7 +20,7 @@ sheet (`player-concept.svg`) is superseded by it where they differ.
 | Shirt | Fitted short-sleeve athletic tee, black, with lime-yellow seam piping on the shoulders/sides and a small lime logo on the chest. Slightly heathered/worn texture. |
 | Shorts | Black, above the knee, lime side stripe and small logo. |
 | Headband | Black with a lime logo, worn low on the forehead. |
-| Wristbands | Black, both wrists. |
+| Wristbands | None (removed at the owner's request, 2026-10-27). |
 | Socks | White crew socks. |
 | Shoes | Black court shoes with lime accents and a lime/white sole. |
 

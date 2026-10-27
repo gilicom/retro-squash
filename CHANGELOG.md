@@ -21,6 +21,19 @@ All notable changes to this project are documented here. The format follows
   orientations are read from the file. Procedural bodies remain the fallback. Pose viewer
   `model=1` shows the rigged character.
 
+### Changed (pose review, 2026-10-27)
+- A lifted heel raises the ankle by the toe lever, so feet no longer sink
+  into the floor in stroke stances and steps.
+- The head looks at the ball (yaw and pitch) before and through the stroke;
+  on the T it keeps watching the opponent.
+- Backhand preparation: hips turned 135° toward the wall, racket hand beside
+  the left shoulder clear of the head, elbow pointing at the front wall.
+- The racket hand's palm always stays on its natural side (-(forearm x
+  racket)); the free hand's palm faces down and toward the body, so hands no
+  longer flip between keyframes.
+- Wristbands removed from the character. Keyframe renders in
+  `docs/design/keyframes` for pose review.
+
 ### Changed (character v2)
 - Real squash grip: the fingers are posed in Blender around the handle, which
   runs diagonally across the palm (18° above the knuckle line) with the thumb
