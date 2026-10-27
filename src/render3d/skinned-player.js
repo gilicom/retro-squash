@@ -14,8 +14,8 @@
  *
  * Works with any character on the standard Mixamo rig (bones named
  * `mixamorig<Name>`), such as the three.js Xbot test mannequin or a Mixamo /
- * Ready Player Me human. The character must be exported in a T-pose with
- * identity bone orientations (what three.js / Mixamo glTF exports do), facing +z.
+ * Ready Player Me human. The character must be exported in a T-pose; the
+ * facing direction and bone orientations are read from the rest pose.
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -38,7 +38,6 @@ export function loadCharacter(url) {
 }
 
 const UP = new THREE.Vector3(0, 1, 0);
-const FWD_REST = new THREE.Vector3(0, 0, 1); // Mixamo characters face +z in rest
 
 /** Quaternion of the frame whose +y is `y` and whose +z is `zHint` made orthogonal. */
 function frameYZ(y, zHint, out, m = new THREE.Matrix4(), tx = new THREE.Vector3(), ty = new THREE.Vector3(), tz = new THREE.Vector3()) {
@@ -88,7 +87,10 @@ export class SkinnedPlayer {
     const ankle = P.LeftFoot.y - Math.min(P.LeftToeBase.y, 0);
     const hipX = Math.abs(P.LeftUpLeg.x);
     const hipsY = P.Hips.y;
-    this.restHipsToUpLeg = P.LeftUpLeg.y - P.Hips.y;
+    // Rest facing: left is from the right hip to the left hip, forward = left x up.
+    const LEFT_REST = P.LeftUpLeg.clone().sub(P.RightUpLeg).setY(0).normalize();
+    const FWD_REST = new THREE.Vector3().crossVectors(LEFT_REST, UP).normalize();
+    this.fwdRest = FWD_REST;
 
     // Invisible solver with this character's leg geometry.
     this.solver = new PlayerModel(color, look, { thigh, shin, ankle, hipX, hipsY });
@@ -101,10 +103,10 @@ export class SkinnedPlayer {
       Hips: frameYZ(UP, FWD_REST, new THREE.Quaternion()),
       Spine: frameYZ(UP, FWD_REST, new THREE.Quaternion()),
       Head: frameYZ(UP, FWD_REST, new THREE.Quaternion()),
-      LeftUpLeg: frameYX(dir('LeftUpLeg', 'LeftLeg'), new THREE.Vector3(1, 0, 0), new THREE.Quaternion()),
-      LeftLeg: frameYX(dir('LeftLeg', 'LeftFoot'), new THREE.Vector3(1, 0, 0), new THREE.Quaternion()),
-      RightUpLeg: frameYX(dir('RightUpLeg', 'RightLeg'), new THREE.Vector3(1, 0, 0), new THREE.Quaternion()),
-      RightLeg: frameYX(dir('RightLeg', 'RightFoot'), new THREE.Vector3(1, 0, 0), new THREE.Quaternion()),
+      LeftUpLeg: frameYX(dir('LeftUpLeg', 'LeftLeg'), LEFT_REST, new THREE.Quaternion()),
+      LeftLeg: frameYX(dir('LeftLeg', 'LeftFoot'), LEFT_REST, new THREE.Quaternion()),
+      RightUpLeg: frameYX(dir('RightUpLeg', 'RightLeg'), LEFT_REST, new THREE.Quaternion()),
+      RightLeg: frameYX(dir('RightLeg', 'RightFoot'), LEFT_REST, new THREE.Quaternion()),
       LeftFoot: frameYZ(UP, FWD_REST, new THREE.Quaternion()),
       RightFoot: frameYZ(UP, FWD_REST, new THREE.Quaternion()),
       LeftArm: frameYX(dir('LeftArm', 'LeftForeArm'), new THREE.Vector3(0, -1, 0), new THREE.Quaternion()),
@@ -128,7 +130,7 @@ export class SkinnedPlayer {
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       const cloned = mats.map((m) => {
         const c = m.clone();
-        if (/surface|body|shirt|cloth/i.test(m.name) || !m.map) c.color.copy(tint).lerp(new THREE.Color(0xffffff), 0.35);
+        c.color.copy(tint).lerp(new THREE.Color(0xffffff), m.map ? 0.72 : 0.35);
         return c;
       });
       o.material = Array.isArray(o.material) ? cloned : cloned[0];
@@ -203,7 +205,6 @@ export class SkinnedPlayer {
 
     // Hips: position from the solver, facing from the root.
     const hipsWorld = s.hips.getWorldPosition(new THREE.Vector3());
-    hipsWorld.y -= this.restHipsToUpLeg * 0 + (s.dims.hipsY - s.hips.position.y) * 0; // solver already lowered the hips
     this._axes(s.hips, y, z);
     z.negate(); // solver faces -z
     desired.set('Hips', this._desired('Hips', frameYZ(y, z, new THREE.Quaternion()), new THREE.Quaternion()));

@@ -132,9 +132,12 @@ only ever bend backwards.
 
 ### Rigged character (`skinned-player.js`)
 
-When `public/models/Xbot.glb` loads, the procedural bodies are replaced by a
+When the character file (`CHARACTER_URL`, by default
+`public/models/Soldier.glb`) loads, the procedural bodies are replaced by a
 rigged glTF character on the standard **Mixamo** skeleton (bones named
-`mixamorig<Name>`, T-pose, identity bone orientations, facing +z). The
+`mixamorig<Name>`, T-pose). The rest facing (left hip → right hip × up)
+and every bone's rest orientation are read from the file, so both +z and
+-z facing exports and non-identity bone rotations work. The
 procedural `PlayerModel` keeps running as an invisible **solver**, built
 with the character's own bone lengths (thigh, shin, ankle height, hip
 width, hip height read from the rest pose) so the footstep IK plants the
@@ -155,9 +158,12 @@ strings facing the solver's palm normal).
 
 Any character on the Mixamo rig works: drop a glTF/GLB into
 `public/models/` and point `CHARACTER_URL` in `renderer3d.js` at it.
-Xbot (three.js test mannequin, MIT) is the bundled stand-in; a Mixamo or
-Ready Player Me human gives a realistic player with clothing textures. If
-the file is missing or fails to load, the procedural bodies stay.
+Bundled: **Soldier** (three.js examples, textured armoured human, the
+default) and **Xbot** (grey mannequin). Textured characters get a light team
+tint, untextured ones a strong one. A Mixamo athlete export gives a proper
+squash player with sports clothing. If the file is missing or fails to
+load, the procedural bodies stay. (Ready Player Me's avatar CDN,
+models.readyplayer.me, no longer resolves, so it is not an option.)
 
 ### Ball and effects (`renderer3d.js`)
 

@@ -16,8 +16,9 @@ All notable changes to this project are documented here. The format follows
 ### Added (characters)
 - Rigged glTF characters on the Mixamo skeleton, driven by the procedural
   solver through direction retargeting (`skinned-player.js`); the bundled
-  three.js Xbot mannequin is the stand-in, any Mixamo/Ready Player Me human
-  can replace it. Procedural bodies remain the fallback. Pose viewer
+  three.js Soldier (textured human) is the default and Xbot the mannequin;
+  any Mixamo human on the same rig can replace them. Rest facing and bone
+  orientations are read from the file. Procedural bodies remain the fallback. Pose viewer
   `model=1` shows the rigged character.
 
 ### Changed

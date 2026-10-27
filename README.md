@@ -107,7 +107,8 @@ JSDoc with units (metres, seconds, m/s).
 
 The players are rigged glTF characters on the Mixamo skeleton, driven by the
 game's own procedural animation (footsteps, lunge, strokes). The bundled
-character is the three.js **Xbot** test mannequin. For realistic players,
+characters are the three.js **Soldier** (textured, the default) and **Xbot**
+(mannequin). For realistic players,
 export any character from [Mixamo](https://www.mixamo.com) (T-pose, FBX →
 glTF/GLB) or [Ready Player Me](https://readyplayer.me), place it in
 `public/models/` and set `CHARACTER_URL` in `src/render3d/renderer3d.js`;
@@ -115,8 +116,8 @@ no animation files are needed. See docs/RENDERING.md.
 
 ## Credits
 
-Inspired by *Squash* by ITISA Electronics (Palamós, 1984). Xbot character
-from the [three.js](https://github.com/mrdoob/three.js) examples (MIT). Court dimensions and
+Inspired by *Squash* by ITISA Electronics (Palamós, 1984). Soldier and Xbot
+characters from the [three.js](https://github.com/mrdoob/three.js) examples (MIT). Court dimensions and
 rules follow the World Squash *Rules of Singles Squash* (2025 edition). Player
 movement and animation follow coaching material: Control the T, [A blueprint
 for moving like the pros](https://blog.controlthet.com/blog/a-blueprint-for-moving-like-the-pros),
