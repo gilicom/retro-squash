@@ -44,6 +44,16 @@ const NUM_KEYS = ['yaw', 'shoulders', 'pitch', 'drop', 'wide', 'knee', 'step'];
 const STANCE_HALF = 0.14;
 
 /**
+ * Hops. The split step is timed to the opponent's contact: a short load (knees dip), the feet
+ * leave the floor just before the racket meets the ball and land ~0.17 s after it, a little
+ * wider, the knees absorbing the landing so the first stride can push off. After the player's
+ * own shot a smaller push-off hop brings the feet out of the lunge and under the body for the
+ * jog back to the T. Times in seconds, heights in metres.
+ */
+const SPLIT_STEP = { load: 0.07, flight: 0.2, land: 0.28, height: 0.035, dip: 0.02, sink: 0.05, widen: 0.05 };
+const PUSH_OFF = { load: 0, flight: 0.18, land: 0.22, height: 0.025, dip: 0, sink: 0.03, widen: 0 };
+
+/**
  * Default rig dimensions (m): the procedural body. A skinned character
  * passes its own bone lengths so the leg IK plants its feet correctly.
  * @typedef {{hipX:number, hipsY:number, thigh:number, shin:number, ankle:number, toeLen:number}} RigDims
@@ -68,7 +78,7 @@ const FOREHAND = [
   // 3. follow-through (frame 3): body rotates to face the front wall.
   { t: 0.62, E: v3(-0.2, 0.35, -0.85), W: v3(-0.5, 0.8, -0.3), R: v3(0.1, 0.75, 0.65), N: v3(0.6, 0.3, -0.7), LE: v3(-0.45, -0.4, 0.75), LW: v3(-0.3, -0.5, 0.8), yaw: -0.25, shoulders: 0.35, pitch: 0.25, drop: 0.05, wide: 0.1, knee: 0.3, step: 0.7 },
   // ready: square to the front wall, racket up in front, free hand near the racket throat, knees bent, feet wide.
-  { t: 1.0, E: v3(0.35, -0.85, -0.35), W: v3(0.2, 0.35, -0.9), R: v3(-0.1, 0.95, -0.1), N: v3(-0.7, 0, -0.7), LE: v3(-0.3, -0.8, -0.5), LW: v3(0.55, 0.15, -0.8), yaw: 0, shoulders: 0, pitch: 0.14, drop: 0, wide: 0.08, knee: 0.1, step: 0 },
+  { t: 1.0, E: v3(0.35, -0.85, -0.35), W: v3(0.2, 0.35, -0.9), R: v3(-0.1, 0.95, -0.1), N: v3(-0.7, 0, -0.7), LE: v3(-0.3, -0.8, -0.5), LW: v3(0.55, 0.15, -0.8), yaw: 0, shoulders: 0, pitch: 0.18, drop: 0, wide: 0.1, knee: 0.26, step: 0 },
 ];
 
 /** Mirror a forehand keyframe across the body for the backhand (racket stays in the right hand). */
@@ -149,8 +159,10 @@ export class PlayerModel {
     this.lunge = 0;
     this.lungeX = 0;
     this.lungeZ = -1;
-    this.split = 0;
+    this.hopT = -1;
+    this.hopCfg = SPLIT_STEP;
     this.prevOppSwing = 0;
+    this.prevSwingT = -1;
     this.prep = 0;
     this.prepSide = 1;
     this.time = 0;
@@ -258,15 +270,28 @@ export class PlayerModel {
     this.prevRoot.set(p.x, 0, p.z);
     this.time += dt;
 
-    // Split step: one small fast hop the instant the opponent strikes.
+    // Split step: triggered by the start of the opponent's swing (its contact comes 0.12 s later),
+    // so the feet are in the air as the racket meets the ball. Push-off: triggered by the player's
+    // own follow-through, when the rally goes on.
+    const swingT0 = p.swing > 0 ? 1 - p.swing : -1;
     if (opponent) {
-      if (opponent.swing > 0.95 && this.prevOppSwing <= 0.95 && ball.inPlay && p.swing <= 0) this.split = 1;
+      if (opponent.swing > 0.95 && this.prevOppSwing <= 0.95 && ball.inPlay && p.swing <= 0) { this.hopT = 0; this.hopCfg = SPLIT_STEP; }
       this.prevOppSwing = opponent.swing;
     }
-    if (this.split > 0) this.split = Math.max(0, this.split - dt / 0.26);
-    const splitU = this.split > 0 ? 1 - this.split : -1;
-    const hop = splitU >= 0 ? Math.sin(Math.PI * Math.min(1, splitU / 0.7)) * 0.045 : 0;
-    const landed = splitU >= 0 ? smooth(clamp((splitU - 0.4) / 0.6, 0, 1)) : 0;
+    if (swingT0 >= 0.6 && this.prevSwingT >= 0 && this.prevSwingT < 0.6 && ball.inPlay) { this.hopT = 0; this.hopCfg = PUSH_OFF; }
+    this.prevSwingT = swingT0;
+    let hop = 0, dip = 0, landed = 0, airborne = false;
+    if (this.hopT >= 0) {
+      const c = this.hopCfg;
+      const t = this.hopT += dt;
+      if (t < c.load) dip = c.dip * Math.sin(Math.PI * t / c.load);
+      else if (t < c.load + c.flight) { hop = c.height * Math.sin(Math.PI * (t - c.load) / c.flight); airborne = true; }
+      else if (t < c.load + c.flight + c.land) {
+        const u = (t - c.load - c.flight) / c.land;
+        landed = u < 0.25 ? smooth(u / 0.25) : 1 - smooth((u - 0.25) / 0.75);
+      } else this.hopT = -1;
+    }
+    const widen = landed * this.hopCfg.widen, sink = landed * this.hopCfg.sink;
 
     // ------------------------------------------------ movement analysis
     const speed = Math.hypot(p.vx, p.vz);
@@ -303,7 +328,7 @@ export class PlayerModel {
     this.lateral = ease(this.lateral, latT, dt, rate);
     this.forward = ease(this.forward, fwdT, dt, rate);
     this.backward = ease(this.backward, bwdT, dt, rate);
-    this.lunge = ease(this.lunge, lungeT, dt, lungeT > this.lunge ? 16 : 6);
+    this.lunge = ease(this.lunge, lungeT, dt, lungeT > this.lunge ? 16 : (airborne ? 14 : 6));
     this.prep = ease(this.prep, prepT, dt, prepT > this.prep ? 10 : 5);
     if (lungeT > 0.05) { this.lungeX = ease(this.lungeX, lx, dt, 12); this.lungeZ = ease(this.lungeZ, lz, dt, 12); }
     const run = this.run, lat = this.lateral, fwd = this.forward, bwd = this.backward, lunge = this.lunge;
@@ -314,6 +339,9 @@ export class PlayerModel {
       sampleKeys(side > 0 ? FOREHAND : BACKHAND, clamp(swingT, 0, 1), pose);
     } else {
       sampleKeys(FOREHAND, 1, pose);
+      // The ready squat is for waiting on the T; a running body stands taller.
+      pose.knee *= 1 - 0.6 * run;
+      pose.wide *= 1 - 0.5 * run;
       if (this.prep > 0.01) {
         sampleKeys(this.prepSide > 0 ? FOREHAND : BACKHAND, 0, this.prepPose);
         // While running the body cannot be fully sideways: keep the arm prepared, soften the body.
@@ -347,7 +375,9 @@ export class PlayerModel {
     if (bwd > 0.1) face = -Math.sign(dirX || 1) * 0.5 * bwd;
     if (fwd > 0.1) face += -dirX * 0.25 * fwd;
     if (ball.inPlay) {
-      const follow = clamp(yawToBall, -1.3, 1.3) * 0.6;
+      // Waiting for the opponent's shot the feet stay toward the front wall (the head watches);
+      // the body turns toward the ball once it is ours.
+      const follow = clamp(yawToBall, -1.3, 1.3) * (myTurn ? 0.6 : 0.3);
       face = lerp(face + follow, face + pose.yaw, clamp(Math.max(this.prep, swingT >= 0 ? 1 : 0), 0, 1));
     } else {
       face += pose.yaw;
@@ -364,7 +394,7 @@ export class PlayerModel {
       const ls = this.legs[i].side;
       const frontFoot = ls === -strokeSide;
       // Rest position: under the hip, spread by the stance, staggered by the pose, pushed by a lunge, led by velocity.
-      let lateral = ls * (STANCE_HALF + pose.wide + 0.08 * landed);
+      let lateral = ls * (STANCE_HALF + pose.wide + widen);
       let ahead = frontFoot ? pose.step * 0.42 : -pose.step * 0.3;
       if (lunge > 0.02) {
         const front = inStroke ? frontFoot : (Math.abs(this.lungeX) > 0.35 ? Math.sign(this.lungeX) === ls : ls === -ballSide);
@@ -387,7 +417,8 @@ export class PlayerModel {
         ft.swing += dt / ft.duration;
         if (ft.swing >= 1) { ft.swing = -1; ft.planted.copy(ft.to); }
       }
-      if (ft.swing < 0 && ot.swing < 0) {
+      if (airborne && ft.swing < 0) ft.planted.lerp(rest, Math.min(1, dt * 18));
+      if (ft.swing < 0 && ot.swing < 0 && !airborne) {
         const dist = Math.hypot(ft.planted.x - rest.x, ft.planted.z - rest.z);
         const otherRest = this._rest[1 - i];
         const otherDist = Math.hypot(ot.planted.x - otherRest.x, ot.planted.z - otherRest.z);
@@ -453,6 +484,8 @@ export class PlayerModel {
       // Keep the step system primed where the jog leaves the foot.
       if (jogW > 0.5) { ft.swing = -1; ft.planted.set(jog.x, 0, jog.z); }
     }
+    // Both feet leave the floor in a hop.
+    for (const ft of this.feet) if (ft.swing < 0) ft.pos.y += hop * (1 - jogW);
     // Hips lowest at mid-stance, slightly up in flight.
     jogDip = (0.042 * jogDip - 0.012) * jogW;
     const swingMax = Math.max(this.feet[0].swing, this.feet[1].swing);
@@ -466,7 +499,7 @@ export class PlayerModel {
     // Lower the hips when the feet are far apart so the legs can reach (lunge).
     const spread = Math.hypot(this.feet[0].pos.x - this.feet[1].pos.x, this.feet[0].pos.z - this.feet[1].pos.z);
     const spreadDrop = clamp((spread - 0.5) * 0.35, 0, 0.22);
-    this.hips.position.y = this.dims.hipsY - stanceDrop - run * 0.04 - pose.drop - kneeDrop - spreadDrop - lowBall * 0.05 + stepBob + breathe + hop - landed * 0.03 - jogDip;
+    this.hips.position.y = this.dims.hipsY - stanceDrop - run * 0.04 - pose.drop - kneeDrop - spreadDrop - lowBall * 0.05 + stepBob + breathe + hop * (1 - jogW) - sink - dip - jogDip;
 
     this.torso.rotation.set(0, 0, 0);
     this.torso.rotation.y = pose.shoulders;
@@ -504,6 +537,7 @@ export class PlayerModel {
       const frontFoot = leg.side === -strokeSide;
       let toe = ft.swing >= 0 ? 0.35 * Math.sin(Math.PI * ft.swing) : 0;
       if (ft.jogSwing >= 0) toe += 0.45 * Math.sin(Math.PI * ft.jogSwing) * jogW;
+      if (airborne && ft.swing < 0) toe += 0.3 * hop / this.hopCfg.height;
       if (!frontFoot && (pose.step > 0.3 || lunge > 0.3)) toe += 0.45 * Math.max(pose.step, lunge);
       // The foot pivots about the ankle, so a lifted heel raises the ankle by the toe lever; the toes stay on the floor.
       const footLocal = this._w.set(localX, ft.pos.y + this.dims.ankle + this.dims.toeLen * Math.sin(toe), localZ);

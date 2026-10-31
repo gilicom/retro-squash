@@ -11,6 +11,8 @@
  *   lunge  0..1 force a lunge (default: from the pose)
  *   run    0..1 running intensity (default 0)
  *   model  1 = show the rigged glTF character driven by the same solver
+ *   split  seconds after the opponent starts a swing (split step: 0.05 load, 0.17 airborne, 0.33 landing)
+ *   push   seconds after this player's follow-through begins (push-off hop: 0.09 airborne)
  *   file   character file in public/models (default Xbot.glb)
  *
  * The page renders once per load (no animation loop), so it also works in
@@ -65,7 +67,7 @@ const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
 function params() {
   const q = new URLSearchParams(location.search);
   const n = (k, d) => (q.has(k) ? Number(q.get(k)) : d);
-  return { side: n('side', 1), phase: q.has('phase') ? n('phase', 0) : null, prep: n('prep', 0), ballY: n('ballY', 0.3), cam: n('cam', 35), lunge: q.has('lunge') ? n('lunge', 0) : null, run: n('run', 0), turn: n('turn', 1), frames: n('frames', 90) };
+  return { side: n('side', 1), phase: q.has('phase') ? n('phase', 0) : null, prep: n('prep', 0), ballY: n('ballY', 0.3), cam: n('cam', 35), lunge: q.has('lunge') ? n('lunge', 0) : null, run: n('run', 0), turn: n('turn', 1), frames: n('frames', 90), split: q.has('split') ? n('split', 0) : null, push: q.has('push') ? n('push', 0) : null };
 }
 
 /** Fake simulation state matching what PlayerModel reads from a Player. */
@@ -96,6 +98,21 @@ window.render = async function render(o = {}) {
   for (let i = 0; i < p.frames; i++) {
     model.update(player, ball, 1 / 60, undefined, p.phase === null ? p.turn === 1 && p.prep > 0 : false);
     if (p.lunge !== null) model.lunge = p.lunge;
+  }
+  if (p.split !== null) {
+    // The opponent (at the back of the court) starts a swing; step on for `split` seconds.
+    const opp = fakePlayer({ x: CX + 1.5, z: 3.5, swing: 0 });
+    const far = { x: CX + 1.4, y: 0.6, z: 3.2, inPlay: true };
+    ballMesh.position.set(far.x, far.y, far.z);
+    for (let i = 0; i < 30; i++) model.update(player, far, 1 / 60, opp, false);
+    opp.swing = 1;
+    for (let t = 0; t < p.split; t += 1 / 60) { model.update(player, far, 1 / 60, opp, false); opp.swing = Math.max(0, opp.swing - (1 / 60) / 0.5); }
+  }
+  if (p.push !== null) {
+    // Run the player's own swing to the follow-through, then on for `push` seconds.
+    player.swing = 1;
+    while (player.swing > 0.4 + 1e-6) { model.update(player, ball, 1 / 60, undefined, true); player.swing = Math.max(0, player.swing - (1 / 60) / 0.5); }
+    for (let t = 0; t < p.push; t += 1 / 60) { model.update(player, ball, 1 / 60, undefined, true); player.swing = Math.max(0, player.swing - (1 / 60) / 0.5); }
   }
   renderer.render(scene, camera);
   document.getElementById('hud').textContent = JSON.stringify(p);

@@ -125,8 +125,10 @@ export class Player {
       const dz = this.targetZ - this.z;
       const dist = Math.hypot(dx, dz);
       const top = Math.min(this.effectiveSpeed, this.speedCap);
-      // Approach speed: full speed when far, eased when within 20 cm.
-      const sp = dist < 1e-4 ? 0 : Math.min(top, dist / 0.08);
+      // Approach speed: full speed when far, braking late for the ball (the last stride is a
+      // lunge) and decelerating gently into the T on a capped recovery jog.
+      const brake = this.speedCap < Infinity ? 0.35 : 0.08;
+      const sp = dist < 1e-4 ? 0 : Math.min(top, dist / brake);
       const nvx = dist < 1e-4 ? 0 : (dx / dist) * sp;
       const nvz = dist < 1e-4 ? 0 : (dz / dist) * sp;
       // Smooth velocity so animation and shot angles are not jittery.

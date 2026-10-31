@@ -92,6 +92,8 @@ throttled background tabs):
 | `cam` | camera azimuth in degrees (0 from the front wall, 90 from the player's right) |
 | `lunge`, `run` | force lunge depth / running intensity |
 | `model`, `file` | `model=1` shows the rigged glTF character driven by the same solver; `file` picks it from public/models (default Xbot.glb) |
+| `split` | seconds after the opponent (at the back of the court) starts a swing: 0.05 load, 0.17 in the air, 0.33 landing |
+| `push` | seconds after this player's own follow-through begins (the push-off hop): 0.09 in the air |
 
 Example: `dev/poses.html?side=1&phase=0.22&cam=35&ballY=0.3`. Put reference
 photographs in `ref/` (git-ignored) and compare.
