@@ -21,6 +21,7 @@
 html, body {
   margin: 0;
   height: 100%;
+  height: 100dvh;
   background: var(--bg);
   color: var(--text);
   font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -251,17 +252,149 @@ body.touch #touchButtons { display: flex; }
   color: #111;
 }
 
+#touchButtons button.smash {
+  border-color: rgba(245, 225, 106, 0.6);
+  color: var(--accent);
+}
+
 /* ------------------------------------------------------------ buttons */
-button {
+button, input {
   font: inherit;
   color: var(--text);
+  touch-action: manipulation;
+}
+
+button {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 10px;
   padding: 10px 18px;
+  min-height: 44px;
   cursor: pointer;
   transition: background 0.15s, transform 0.05s;
 }
+
+input[type="text"] {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 18px;
+  text-align: center;
+  outline: none;
+}
+
+input[type="text"]:focus { border-color: var(--accent); }
+
+.error {
+  margin: 0;
+  color: #ff8a8a;
+  font-size: 14px;
+}
+
+.menu-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.menu-row button { flex: 1 1 140px; }
+
+.player-line {
+  margin: -6px 0 0;
+  font-size: 14px;
+  color: var(--you);
+}
+
+button.install {
+  border-color: rgba(198, 255, 46, 0.5);
+}
+
+#updateBar {
+  position: absolute;
+  top: calc(var(--safe-top) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 8px 16px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 14px;
+  white-space: nowrap;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+#updateBar button.primary { padding: 6px 16px; font-size: 14px; min-height: 36px; }
+
+.rank-line {
+  margin: 0;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------- leaderboard */
+.panel.board {
+  width: min(560px, 100%);
+  max-height: 100%;
+  gap: 10px;
+}
+
+.board-me {
+  margin: 0;
+  color: var(--you);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.board-scroll {
+  overflow: auto;
+  max-height: min(52vh, 480px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.board-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.board-table th, .board-table td {
+  padding: 7px 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.board-table th {
+  position: sticky;
+  top: 0;
+  background: #161c28;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.board-table th.name, .board-table td:nth-child(2) {
+  text-align: start;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+}
+
+.board-table tbody tr:nth-child(odd) { background: rgba(255, 255, 255, 0.03); }
+.board-table tbody tr:nth-child(1) td:first-child { color: #ffd700; font-weight: 700; }
+.board-table tbody tr:nth-child(2) td:first-child { color: #c0c0c0; font-weight: 700; }
+.board-table tbody tr:nth-child(3) td:first-child { color: #cd7f32; font-weight: 700; }
+.board-table tr.me td { color: var(--you); font-weight: 700; background: rgba(198, 255, 46, 0.1); }
 
 button:hover { background: rgba(255, 255, 255, 0.14); }
 button:active { transform: scale(0.97); }
@@ -412,6 +545,19 @@ button.icon {
   .score .name { font-size: 11px; }
   .score .games { font-size: 10px; }
   .stamina .bar { width: 64px; }
+  .panel { padding: 22px 16px; gap: 12px; }
+  .row { grid-template-columns: 84px 1fr; }
+  .seg button { padding: 10px 4px; font-size: 13px; }
+  #touchButtons button { width: 68px; height: 68px; font-size: 12px; }
+  .board-table th, .board-table td { padding: 7px 5px; font-size: 13px; }
+  #updateBar { max-width: calc(100vw - 24px); white-space: normal; }
+}
+
+/* Phones in landscape: little height, so the touch buttons sit in a row and panels stay compact. */
+@media (max-height: 460px) and (pointer: coarse) {
+  #touchButtons { flex-direction: row; bottom: calc(var(--safe-bottom) + 10px); }
+  #touchButtons button { width: 60px; height: 60px; font-size: 11px; }
+  .board-scroll { max-height: 40vh; }
 }
 
 @media (max-height: 560px) {

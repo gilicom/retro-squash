@@ -2,13 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
   <meta name="theme-color" content="#0b0f16" />
-  <meta name="description" content="Retro Squash: the 1984 arcade classic rebuilt in real 3D with real physics for desktop and mobile." />
+  <meta name="description" content="Retro Squash: the 1984 arcade classic rebuilt in real 3D with real physics for desktop and mobile. Play against the computer and climb the world ranking." />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Squash" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="./src/styles/main.css" />
   <link rel="manifest" href="manifest.webmanifest" />
   <title>Retro Squash</title>
@@ -18,6 +20,12 @@
     <div id="stage">
       <canvas id="court3d" aria-label="Squash court"></canvas>
       <div id="webglError" class="overlay hidden"><div class="panel small"><h2 data-i18n="webglTitle"></h2><p class="sub" data-i18n="webglBody"></p></div></div>
+    </div>
+
+    <!-- New version banner (service worker update) -->
+    <div id="updateBar" class="hidden" role="status">
+      <span data-i18n="updateAvailable"></span>
+      <button id="btnUpdate" class="primary" data-i18n="update"></button>
     </div>
 
     <!-- HUD -->
@@ -46,6 +54,7 @@
       <div id="demoBadge" class="hidden" data-i18n="demoBadge">DEMO</div>
       <div id="msg" class="hidden"></div>
       <div id="touchButtons">
+        <button data-action="smash" class="smash" data-i18n="smash">SMASH</button>
         <button data-action="lob" data-i18n="lob">LOB</button>
         <button data-action="drop" data-i18n="drop">DROP</button>
       </div>
@@ -57,7 +66,13 @@
         <h1 data-i18n="title">SQUASH</h1>
         <p class="sub" data-i18n="subtitle"></p>
         <button id="btnPlay" class="primary" data-i18n="play">Play</button>
-        <button id="btnDemo" data-i18n="demo">Watch a demo</button>
+        <div class="menu-row">
+          <button id="btnRanking" data-i18n="ranking"></button>
+          <button id="btnDemo" data-i18n="demo"></button>
+        </div>
+        <p id="playerLine" class="player-line hidden"></p>
+        <button id="btnInstall" class="install hidden" data-i18n="install"></button>
+        <p id="installHint" class="sub hidden" data-i18n="installHint"></p>
 
         <div class="settings">
           <div class="row">
@@ -117,6 +132,40 @@
       </div>
     </div>
 
+    <!-- Nickname (first play, or "change name") -->
+    <div id="nickname" class="overlay hidden">
+      <form class="panel small" id="nicknameForm" autocomplete="off">
+        <h2 data-i18n="nicknameTitle"></h2>
+        <p class="sub" data-i18n="nicknameBody"></p>
+        <input id="nicknameInput" type="text" maxlength="16" minlength="2" required autocapitalize="words" enterkeyhint="done" />
+        <p id="nicknameError" class="error hidden"></p>
+        <button type="submit" class="primary" data-i18n="save"></button>
+        <button type="button" id="btnNicknameCancel" class="hidden" data-i18n="close"></button>
+      </form>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboard" class="overlay hidden">
+      <div class="panel board">
+        <h2 data-i18n="ranking"></h2>
+        <p id="boardMe" class="board-me"></p>
+        <p id="boardStatus" class="sub"></p>
+        <div class="board-scroll">
+          <table class="board-table">
+            <thead>
+              <tr><th data-i18n="rank"></th><th class="name" data-i18n="player"></th><th data-i18n="rating"></th><th data-i18n="matches"></th><th data-i18n="wins"></th></tr>
+            </thead>
+            <tbody id="boardBody"></tbody>
+          </table>
+        </div>
+        <div class="menu-row">
+          <button id="btnBoardRefresh" data-i18n="refresh"></button>
+          <button id="btnChangeName" data-i18n="changeName"></button>
+          <button id="btnBoardClose" class="primary" data-i18n="close"></button>
+        </div>
+      </div>
+    </div>
+
     <!-- Pause -->
     <div id="pause" class="overlay hidden">
       <div class="panel small">
@@ -132,6 +181,7 @@
       <div class="panel small">
         <h2 id="goTitle"></h2>
         <p id="goBody" class="sub"></p>
+        <p id="goRank" class="rank-line hidden"></p>
         <button id="btnContinue" class="primary"></button>
         <button id="btnMenu2" data-i18n="menu"></button>
       </div>

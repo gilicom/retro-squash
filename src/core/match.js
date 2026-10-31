@@ -34,6 +34,23 @@ export const ARM_DURATION = 0.9;
 export const POINT_PAUSE = 1.7;
 /** Rally time without a racket contact after which the ball is called dead (s). */
 export const RALLY_TIMEOUT = 9;
+/** How long an aimed direction (touch drag) stays armed (s). */
+export const AIM_DURATION = 2.0;
+/** An aim can point at most this far sideways: forward component >= this fraction of its length. */
+const AIM_MIN_FORWARD = 0.25;
+
+/**
+ * Front-wall target x for an aimed shot: continue the aim direction from the
+ * ball to the front wall (z = 0). Sideways aims are bent forward so the
+ * ball always reaches the wall; the strike clamps x to the court.
+ * @param {{x:number, z:number}} ball
+ * @param {{dx:number, dz:number}} aim direction in court metres (z negative = toward the front wall)
+ */
+export function aimTargetX(ball, aim) {
+  const len = Math.hypot(aim.dx, aim.dz) || 1;
+  const forward = Math.max(AIM_MIN_FORWARD * len, -aim.dz);
+  return ball.x + (aim.dx / forward) * ball.z;
+}
 
 export class Match {
   /**
@@ -58,6 +75,9 @@ export class Match {
     this.state = 'idle';
     this.armed = null;
     this.armedUntil = 0;
+    /** Aimed direction for the human's next shot (touch drag), or null. */
+    this.aim = null;
+    this.aimUntil = 0;
     this.timer = 0;
     this.rallyClock = 0;
     this.clock = 0;
@@ -119,6 +139,7 @@ export class Match {
     const hand = this.handPosition(server, side);
     this.ball.reset(hand.x, hand.y, hand.z);
     this.armed = null;
+    this.aim = null;
     this.returnToT = false;
     this.state = 'serve';
     this.timer = 1.2 + this.rand() * 0.6;
@@ -168,6 +189,22 @@ export class Match {
     this.armedUntil = this.clock + ARM_DURATION;
   }
 
+  /**
+   * Aim the human's next shot along a direction (touch drag). Ignored
+   * unless a rally is on; expires after {@link AIM_DURATION}.
+   * @param {{dx:number, dz:number}} dir court metres, z negative = toward the front wall
+   */
+  setAim(dir) {
+    if (this.state !== 'rally' || !dir) return;
+    this.aim = { dx: dir.dx, dz: dir.dz };
+    this.aimUntil = this.clock + AIM_DURATION;
+  }
+
+  /** The active aim, or null once it has expired. */
+  get activeAim() {
+    return this.aim && this.clock <= this.aimUntil ? this.aim : null;
+  }
+
   /** Called after the game-over panel: start the next game. */
   nextGame() {
     this.referee.nextGame();
@@ -186,6 +223,7 @@ export class Match {
   update(dt, real = dt) {
     this.clock += dt;
     if (this.armed && this.clock > this.armedUntil) this.armed = null;
+    if (this.aim && this.clock > this.aimUntil) this.aim = null;
     const s = this.state;
     if (s === 'idle' || s === 'gameover' || s === 'matchover') {
       for (const p of this.players) p.update(dt, { resting: true });
@@ -297,8 +335,10 @@ export class Match {
       // Deep behind the body only a boast is possible, whatever was armed.
       shot = forcedShot(p, ball) || this.armed || SHOTS.drive;
       this.armed = null;
-      // Angle comes from where the ball meets the racket and from body movement.
-      tx = ball.x + (ball.x - p.x) * 2.2 + p.vx * 0.35;
+      // Angle comes from where the ball meets the racket and from body movement,
+      // unless the shot was aimed with a touch drag.
+      tx = this.activeAim ? aimTargetX(ball, this.activeAim) : ball.x + (ball.x - p.x) * 2.2 + p.vx * 0.35;
+      this.aim = null;
       this.returnToT = this.autoT;
     } else {
       ({ shot, tx } = this.ai.chooseShot(ball, this.human));

@@ -103,6 +103,23 @@ export class Renderer3D {
     this.tRing.renderOrder = 3;
     this.scene.add(this.tRing);
 
+    // Aim arrow (touch drag): a flat arrow on the floor from the player, pointing along -z
+    // in the group's frame; the group is rotated about y toward the aim direction.
+    this.aimGroup = new THREE.Group();
+    this.aimGroup.visible = false;
+    const arrow = new THREE.Shape();
+    arrow.moveTo(-0.07, 0); arrow.lineTo(0.07, 0); arrow.lineTo(0.07, 1.55); arrow.lineTo(0.22, 1.55);
+    arrow.lineTo(0, 1.95); arrow.lineTo(-0.22, 1.55); arrow.lineTo(-0.07, 1.55); arrow.closePath();
+    this.aimMesh = new THREE.Mesh(
+      new THREE.ShapeGeometry(arrow),
+      new THREE.MeshBasicMaterial({ color: 0xc6ff2e, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide }),
+    );
+    this.aimMesh.rotation.x = -Math.PI / 2; // shape +y -> world -z
+    this.aimMesh.position.y = 0.008;
+    this.aimMesh.renderOrder = 4;
+    this.aimGroup.add(this.aimMesh);
+    this.scene.add(this.aimGroup);
+
     // Effects pool (hit rings and wall marks).
     this.ringGeo = new THREE.RingGeometry(0.75, 1, 32);
     this.markGeo = new THREE.CircleGeometry(0.06, 16);
@@ -178,7 +195,7 @@ export class Renderer3D {
 
   /**
    * Draw a frame.
-   * @param {{ball: import('../physics/ball.js').Ball, players: import('../entities/player.js').Player[], effects: Array, dt: number, inPlay?: boolean}} scene
+   * @param {{ball: import('../physics/ball.js').Ball, players: import('../entities/player.js').Player[], effects: Array, dt: number, inPlay?: boolean, turn?: number, aim?: {x:number,z:number,dx:number,dz:number,alpha?:number}|null}} scene
    */
   draw(scene) {
     const { ball, players, effects, dt } = scene;
@@ -213,6 +230,17 @@ export class Renderer3D {
     const away = Math.min(1, Math.max(0, (human.distanceFromT - 0.9) / 2));
     const target = scene.inPlay ? 0.12 + away * 0.3 * (0.6 + 0.4 * Math.sin(performance.now() / 180)) : 0;
     this.tRing.material.opacity += (target - this.tRing.material.opacity) * Math.min(1, dt * 8);
+
+    // Aim arrow: {x, z, dx, dz, alpha} or null.
+    const aim = scene.aim;
+    this.aimGroup.visible = !!aim;
+    if (aim) {
+      this.aimGroup.position.set(aim.x, 0, aim.z);
+      this.aimGroup.rotation.y = Math.atan2(-aim.dx, -aim.dz);
+      const len = Math.min(1.3, Math.max(0.6, Math.hypot(aim.dx, aim.dz) / 2));
+      this.aimGroup.scale.set(1, 1, len);
+      this.aimMesh.material.opacity = 0.85 * (aim.alpha ?? 1);
+    }
 
     // Effects.
     this._updateEffects(effects, dt);

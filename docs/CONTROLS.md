@@ -27,14 +27,19 @@ Hebrew letter in `event.key`.
 
 | Input | Effect |
 | --- | --- |
-| Drag anywhere on the court | Moves the player **relative** to the drag (gain 1.6), so the finger never has to cover the player. |
-| Tap (< 260 ms, < 12 px) | Serve, or arm a smash. |
-| LOB / DROP buttons | Lob serve or arm the shot. |
+| Tap on the court (< 14 px of movement) | The player runs to the tapped floor point. When it is your serve, a tap serves instead. |
+| Press and drag (first finger) | **Aims** the next shot: the direction from the first touch to the finger becomes the ball's direction, continued from the ball to the front wall (`aimTargetX` in `match.js`). A lime arrow on the floor at the player shows it while the finger is down and, dimmer, while the aim stays armed (2 s, `AIM_DURATION`). A sideways drag is bent forward so the ball always reaches the wall. |
+| SMASH / LOB / DROP buttons | Arm the shot type (a second finger can press them during an aim drag); LOB also serves a lob. |
 | Pause button (top corner) | Pause. |
 
-Touch mode is detected with `(pointer: coarse)` and switches live if a mouse
-is used instead. The page disables browser gestures (`touch-action: none`,
-`overscroll-behavior: none`) and respects safe-area insets on notched phones.
+An aimed shot replaces the body-position rule below for that one contact;
+forced boasts (ball deep behind the body) still override it. Touch mode is
+detected with `(pointer: coarse)` and switches live if a mouse is used
+instead. The page disables browser gestures (`touch-action: none`,
+`overscroll-behavior: none`), has no tap delay (`touch-action: manipulation`
+on controls), respects safe-area insets on notched phones, requests
+fullscreen when a match starts in a browser tab, and holds a screen wake
+lock while a match is on (`src/pwa/pwa.js`).
 
 ## Shot direction
 

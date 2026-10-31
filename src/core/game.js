@@ -22,14 +22,22 @@ const DEMO_CONTINUE_DELAY = 2.5;
 
 export class Game {
   /**
-   * @param {{canvas: HTMLCanvasElement, surface: HTMLElement, ui: import('../ui/ui.js').UI, settings: import('../ui/ui.js').Settings}} opts
+   * @param {{canvas: HTMLCanvasElement, surface: HTMLElement, ui: import('../ui/ui.js').UI, settings: import('../ui/ui.js').Settings,
+   *   onMatchFinished?: (result: import('../ranking/ranking.js').MatchResult) => void,
+   *   onPlaying?: (playing: boolean) => void}} opts
+   *   onMatchFinished fires once per finished, non-demo match; onPlaying when a match starts (true) or
+   *   the game returns to the menu (false), for the wake lock.
    * @throws when WebGL is unavailable
    */
-  constructor({ canvas, surface, ui, settings }) {
+  constructor({ canvas, surface, ui, settings, onMatchFinished, onPlaying }) {
     this.canvas = canvas;
     this.surface = surface;
     this.ui = ui;
     this.settings = settings;
+    this.onMatchFinished = onMatchFinished;
+    this.onPlaying = onPlaying;
+    /** Statistics of the match in progress (for the ranking). */
+    this.stats = null;
 
     this.renderer = new Renderer3D(canvas);
 
@@ -80,7 +88,7 @@ export class Game {
       this.demoTimer = DEMO_SERVE_DELAY;
     });
     m.on('serve', ({ shot }) => { this.sound.racket(shot.speed); ui.message(''); });
-    m.on('hit', ({ shot }) => this.sound.racket(shot.speed));
+    m.on('hit', ({ shot }) => { this.sound.racket(shot.speed); if (this.stats) this.stats.hits++; });
     m.on('wall', ({ info }) => this.sound.wall(info.speed));
     m.on('floor', ({ info }) => { if (info.speed > 1.5) this.sound.floor(info.speed); });
     m.on('rallyEnd', ({ decision }) => {
@@ -88,10 +96,13 @@ export class Game {
       ui.message(`${ui.t(`reason_${decision.reason}`)}  ·  ${ui.t(won ? 'pointYou' : 'pointCpu')}`);
       if (won) this.sound.pointWon(); else this.sound.pointLost();
       ui.updateScore(m.referee.getScore());
+      const st = this.stats;
+      if (st) { st.rallies++; st.longestRally = Math.max(st.longestRally, st.hits); st.hits = 0; }
     });
     m.on('gameOver', ({ decision, score }) => {
       const games = `${ui.t('games')} ${score.games[0]} - ${score.games[1]}`;
       if (decision.winner === 0) this.sound.fanfare();
+      if (this.stats) this.stats.gameScores.push([...score.points]);
       ui.message('');
       ui.showGameOver(ui.t('gameTo', { who: ui.t(decision.winner === 0 ? 'you' : 'cpu') }), games, ui.t('nextGame'), () => m.nextGame());
       this._demoAutoContinue(() => { ui.hideGameOver(); m.nextGame(); });
@@ -102,7 +113,30 @@ export class Game {
       ui.message('');
       ui.showGameOver(ui.t(decision.winner === 0 ? 'matchWon' : 'matchLost'), games, ui.t('newMatch'), () => this.startMatch());
       this._demoAutoContinue(() => { ui.hideGameOver(); this.startMatch(); });
+      this._finishStats(decision, score);
     });
+  }
+
+  /** Build the match result for the ranking and hand it over (non-demo matches only). */
+  _finishStats(decision, score) {
+    const st = this.stats;
+    this.stats = null;
+    if (!st || this.demo) return;
+    st.gameScores.push([...score.points]);
+    const result = {
+      difficulty: st.difficulty,
+      bestOf: st.bestOf,
+      pace: st.pace,
+      autoT: st.autoT,
+      won: decision.winner === 0,
+      games: [...score.games],
+      gameScores: st.gameScores,
+      rallies: st.rallies,
+      longestRally: st.longestRally,
+      duration: Math.round((performance.now() - st.t0) / 1000),
+      startedAt: st.startedAt,
+    };
+    this.onMatchFinished?.(result);
   }
 
   /** In demo mode, continue automatically after a short pause. */
@@ -138,6 +172,12 @@ export class Game {
     this.ui.showHud();
     this.ui.setDemo(this.demo);
     this.match.start(this.settings.bestOf);
+    const s = this.settings;
+    this.stats = this.demo ? null : {
+      difficulty: s.difficulty, bestOf: this.match.bestOf, pace: s.pace, autoT: s.autoT,
+      startedAt: Date.now(), t0: performance.now(), rallies: 0, hits: 0, longestRally: 0, gameScores: [],
+    };
+    this.onPlaying?.(true);
   }
 
   /** Start a match in which a bot plays the human's part (both sides computer controlled). */
@@ -173,9 +213,11 @@ export class Game {
 
   toMenu() {
     this.mode = 'menu';
+    this.stats = null;
     this.stopDemo();
     this.ui.showMenu();
     this.ui.message('');
+    this.onPlaying?.(false);
   }
 
   // ------------------------------------------------------------------- loop
@@ -193,6 +235,7 @@ export class Game {
       dt,
       inPlay: this.mode === 'play' && (m.state === 'rally' || m.state === 'serve'),
       turn: m.referee.turn,
+      aim: this._aimDisplay(),
     });
     requestAnimationFrame((t) => this._frame(t));
   }
@@ -205,7 +248,7 @@ export class Game {
   update(dt, real) {
     for (const a of this.input.takeActions()) this._handleAction(a);
     if (this.mode !== 'play') {
-      this.input.takeDrag();
+      this.input.takeTap();
       this.input.pointerTarget = null;
       for (const p of this.match.players) p.update(dt, { resting: true });
       return;
@@ -224,7 +267,7 @@ export class Game {
   _controlDemo(dt, real) {
     const m = this.match;
     const inp = this.input;
-    inp.takeDrag();
+    inp.takeTap();
     inp.pointerTarget = null;
     if (m.state === 'rally') {
       this.demoBot.update(dt, m.ball, m.referee, m.cpu);
@@ -238,15 +281,26 @@ export class Game {
     }
   }
 
+  /** The aim arrow to draw: the live drag, or the armed aim after the finger lifted. */
+  _aimDisplay() {
+    if (this.mode !== 'play' || this.demo || this.match.state !== 'rally') return null;
+    const h = this.match.human;
+    const live = this.input.aimLive;
+    if (live) return { x: h.x, z: h.z, dx: live.dx, dz: live.dz, alpha: 1 };
+    const armed = this.match.activeAim;
+    if (armed) return { x: h.x, z: h.z, dx: armed.dx, dz: armed.dz, alpha: 0.5 };
+    return null;
+  }
+
   /** Translate pointer / keyboard state into the human player's target. */
   _controlHuman(dt) {
     const h = this.match.human;
     const inp = this.input;
-    if (h.frozen) { inp.takeDrag(); inp.pointerTarget = null; return; }
+    if (h.frozen) { inp.takeTap(); inp.pointerTarget = null; return; }
     let moved = false;
     if (inp.isTouch) {
-      const d = inp.takeDrag();
-      if (d.x || d.z) { h.setTarget(h.targetX + d.x, h.targetZ + d.z); moved = true; }
+      const tap = inp.takeTap();
+      if (tap) { h.setTarget(tap.x, tap.z); moved = true; }
     } else if (inp.pointerTarget) {
       h.setTarget(inp.pointerTarget.x, inp.pointerTarget.z);
       inp.pointerTarget = null;
@@ -268,8 +322,13 @@ export class Game {
       return;
     }
     if (this.mode !== 'play' || this.demo) return;
-    if (a === 'primary') this.match.arm('smash');
-    else if (a === 'lob') this.match.arm('lob');
-    else if (a === 'drop') this.match.arm('drop');
+    const m = this.match;
+    if (a === 'primary' || a === 'smash') m.arm('smash');
+    else if (a === 'lob') m.arm('lob');
+    else if (a === 'drop') m.arm('drop');
+    else if (a === 'tap') {
+      // A tap serves when it is the player's serve; otherwise it is a move target (see _controlHuman).
+      if (m.state === 'serve' && m.referee.server === 0) { this.input.takeTap(); m.serve('serve'); }
+    } else if (a && a.aim) m.setAim(a.aim);
   }
 }

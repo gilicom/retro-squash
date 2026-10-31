@@ -16,6 +16,24 @@
 | `npm test` | Runs `tests/**/*.test.js` with Node's test runner. No test framework to install. |
 | `npm run simulate` | Shot/serve landing tables (`tools/simulate.js`). |
 | `node tools/play-match.js [difficulty] [n]` | Headless bot-vs-AI matches with statistics. |
+| `node tools/make-icons.js` | Regenerates `public/icons/*.png` (PWA icons) from the favicon design; no image library needed. |
+| `npm run deploy` | Builds and force-pushes `dist/` to the `gh-pages` branch (`tools/deploy-pages.js`). |
+
+## PWA build
+
+`tools/vite-plugin-sw.js` runs after the bundle is written: it lists every
+file in `dist/` (except source maps), hashes them into a version string and
+writes `dist/sw.js` from the template `src/pwa/sw.js`. The worker is
+registered only in production builds (`import.meta.env.PROD`), so the dev
+server never caches anything. To test offline behaviour: `npm run build`,
+`npm run preview`, open the page once, then stop the network in DevTools
+(Application → Service workers → Offline) and reload. After a new build the
+page shows "A new version is ready"; pressing Update activates the new
+worker and reloads. `npm run build` prints the precache size.
+
+The ranking backend is configured in `src/config/backend.js` (public keys
+only); with `provider: null` the ranking screen says it is unavailable and
+results stay queued in `localStorage`. See docs/RANKING.md for the SQL.
 
 ## Tests
 
@@ -25,6 +43,7 @@
 | `tests/shots.test.js` | `aimAt` accuracy under drag, every shot legal from the back, x clamping. |
 | `tests/referee.test.js` | Every fault type, serve rules, box alternation, server change, 11/2-point margin, match structure. |
 | `tests/match.test.js` | Full seeded games: completion, rally length, variety of endings, both sides scoring, difficulty ordering, stamina use, serve set-up after a point. |
+| `tests/ranking.test.js` | Rating formula properties, nickname validation, identity persistence, the offline queue against a fake adapter, aimed-shot targeting. |
 
 Tests are deterministic (seeded `mulberry32` PRNG injected into `Match` and
 `AIController`). When a balance change breaks `match.test.js`, run

@@ -27,7 +27,10 @@ camera looking down −z, which matches).
 ```
                     ┌───────────────────────── browser layer ─────────────────────────┐
  index.html ─► main.js ─► ui/ui.js (DOM, i18n) ◄──┐                                   │
-                   │                              │ events / callbacks                │
+                   │  ├─► pwa/pwa.js (service worker, install, wake lock)             │
+                   │  ├─► ranking/ranking.js ─► ranking/providers/* ─► backend (REST) │
+                   │  │      (identity, rating, queue)      config/backend.js         │
+                   │  │                           │ events / callbacks                │
                    └──► core/game.js ─────────────┴─► input/input.js   audio/sound.js │
                            │        │                                                 │
                            │        └─► render3d/renderer3d.js
@@ -77,7 +80,30 @@ original; skill is in positioning, timing of the shot-type buttons and stamina.
 - `input/input.js` — collects *intent* only (`pointerTarget`, drag deltas, held
   keys, queued actions); the game decides what it means.
 - `audio/sound.js` — procedural Web Audio; no asset files.
-- `ui/ui.js`, `ui/i18n.js` — DOM overlay and strings (EN/HE, RTL aware).
+- `ui/ui.js`, `ui/i18n.js` — DOM overlay and strings (EN/HE, RTL aware),
+  including the nickname dialog, the leaderboard and the install/update controls.
+- `pwa/pwa.js` — installable-app plumbing: registers the service worker
+  (production only), surfaces "update available", captures the browser's
+  install prompt (or shows the iOS hint), holds a screen wake lock during a
+  match and asks for fullscreen on touch devices. `pwa/sw.js` is the worker
+  *template*; `tools/vite-plugin-sw.js` fills in the precache list and a
+  content hash at build time and writes `dist/sw.js`.
+- `ranking/` — the world-ranking client (docs/RANKING.md): `identity.js`
+  (player id, secret key, nickname), `rating.js` (reference Elo formula),
+  `ranking.js` (queue, flush, leaderboard), `providers/` (backend adapters;
+  `supabase.js` uses plain `fetch`). `config/backend.js` holds the public
+  keys. `Game` reports a finished non-demo match through `onMatchFinished`;
+  nothing in the core knows about the ranking.
+
+### Touch aiming
+
+Touch input has two gestures: a tap sets the human's target (or serves),
+and a press-and-drag sets an **aim**. `Input` turns the drag into a court
+vector (`aimLive`); on release the game calls `Match.setAim`, which arms it
+for `AIM_DURATION`. At the next human contact `_strike` uses
+`aimTargetX(ball, aim)` (continue the direction from the ball to the front
+wall) instead of the body-position rule. The renderer draws the arrow from
+`scene.aim` and the match core stays free of any input or DOM dependency.
 
 ## Data flow per frame
 
@@ -94,12 +120,28 @@ original; skill is in positioning, timing of the shot-type buttons and stamina.
 `effects` is a plain array of `{x, y, z, age, life, kind}` records created by
 the match and aged/removed by whichever renderer is active.
 
-## Settings
+## Settings and local storage
 
 Settings are a flat object persisted in `localStorage`
 (`retro-squash.settings.v2`): `difficulty`, `pace`, `bestOf`, `autoT`,
 `sound`, `lang`. `Game.applySettings` applies everything live
 except `bestOf`, which takes effect at the next match.
+
+Other keys: `retro-squash.player.v1` (identity: id, key, nickname),
+`retro-squash.ranking.queue.v1` (results waiting to be sent) and
+`retro-squash.ranking.state.v1` (last known rating and rank, for offline
+display). Clearing site data creates a new anonymous player.
+
+## Offline and updates
+
+The production build is a PWA. The service worker precaches every file in
+`dist/` (about 7 MB with the two character models) on first visit, serves
+them cache-first afterwards and never touches cross-origin requests, so the
+ranking backend is always live. A new deployment changes the content hash in
+`sw.js`; the browser installs the new worker in the background, the page
+shows "A new version is ready" and reloads when the player presses Update
+(the new worker only takes over on request, so a match in progress is never
+interrupted).
 
 ## Porting the core elsewhere
 

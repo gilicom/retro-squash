@@ -16,8 +16,16 @@ opponent that reads the ball, and controls for both desktop and touch screens.
 - **Stamina and the T**: running drains a bar; standing on the T refills it.
   "Return to T" jogs you back after every shot until you move.
 - **Demo mode**: watch computer vs computer from the menu.
+- **World ranking**: pick a nickname once; every finished match updates an
+  Elo-style rating against the three computer levels and the top 100 are
+  shown in the menu (see [docs/RANKING.md](docs/RANKING.md)). Works offline:
+  results queue until there is a connection.
+- **Installable app (PWA)**: a service worker precaches the whole game
+  (models included) so it runs offline; "Install app" in the menu on
+  Android / desktop Chrome, "Add to Home Screen" on iOS. Screen wake lock
+  and fullscreen during a match.
 - **No build step required to run**; Vite is used for the dev server and bundling.
-- **Play it now**: https://gilicom.github.io/retro-squash/ (works on phones; add to home screen for full screen).
+- **Play it now**: https://gilicom.github.io/retro-squash/ (phone or desktop; install it for full screen and offline play).
 
 [Hebrew summary / תקציר בעברית](#תקציר-בעברית) is at the end of this file.
 
@@ -40,6 +48,7 @@ the same network, use the `--host` address Vite prints.
 | `npm run simulate` | Print shot and serve landing tables                       |
 | `npm run deploy`   | Build and publish to GitHub Pages (`gh-pages` branch)     |
 | `node tools/play-match.js [easy|normal|hard] [matches]` | Bot-vs-AI balance statistics |
+| `node tools/make-icons.js` | Regenerate the PWA icons in `public/icons/`        |
 
 Requires Node 18+. Only two dependencies: `three` (runtime) and `vite` (dev).
 
@@ -51,8 +60,9 @@ within reach; where the ball meets the racket decides the angle, and moving into
 the ball adds angle. Left click or Space = smash (or serve), right click or
 Shift = lob, K = drop, P / Escape = pause.
 
-**Touch**: drag anywhere to run (relative to the drag, so your finger never covers
-the player). Tap = smash / serve. On-screen LOB and DROP buttons.
+**Touch**: tap the court where you want to run (tap to serve). Press and drag to
+aim the next shot: the arrow on the floor shows the direction the ball will go.
+On-screen SMASH, LOB and DROP buttons choose the shot type.
 
 Rules in one breath: the ball must reach the front wall above the tin and below
 the red out lines (it may touch side walls first), and it may bounce once before
@@ -73,14 +83,16 @@ src/
     match.js            Pure match simulation (runs in Node) and its events
     game.js             Browser glue: loop, renderer choice, input, sound, HUD
   render3d/             Three.js renderer: court, lights, characters, ball, effects
-  input/                Mouse, keyboard and touch
+  input/                Mouse, keyboard and touch (tap to run, drag to aim)
   audio/                Procedural Web Audio sound effects
-  ui/                   DOM overlay and EN/HE strings
+  ui/                   DOM overlay (menu, HUD, ranking, nickname) and EN/HE strings
+  pwa/                  Service worker template, install prompt, wake lock, fullscreen
+  ranking/              Player identity, rating formula, result queue, backend adapters
   styles/               CSS
-tests/                  node:test suites (ball, shots, referee, full matches)
-tools/                  Headless simulation and balancing scripts
+tests/                  node:test suites (ball, shots, referee, full matches, ranking)
+tools/                  Headless simulation, balancing, icon and service-worker build scripts
 docs/                   Design and reference documentation (see below)
-public/                 Static assets (favicon, web manifest)
+public/                 Static assets (favicon, icons, web manifest, glTF models)
 ```
 
 ## Documentation
@@ -94,6 +106,7 @@ public/                 Static assets (favicon, web manifest)
 | [docs/STAMINA.md](docs/STAMINA.md) | Stamina model, the T, return-to-T assist, pace |
 | [docs/CONTROLS.md](docs/CONTROLS.md) | Input mapping for mouse, keyboard and touch |
 | [docs/RENDERING.md](docs/RENDERING.md) | 3D scene, materials, lighting, camera fitting, player rig; classic renderer |
+| [docs/RANKING.md](docs/RANKING.md) | World ranking: rating formula, result queue, backend setup (Supabase SQL), anti-abuse |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Tooling, tests, balancing workflow, deployment, coding conventions |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
@@ -135,7 +148,13 @@ under the MIT licence; see [LICENSE](LICENSE).
 
 שליטה במחשב: תנועת העכבר מזיזה את השחקן; המחבט חובט אוטומטית. לחיצה / רווח =
 חבטת עוצמה או הגשה, לחיצה ימנית / Shift = לוב, K = דרופ, P = השהיה. במובייל:
-גרירה להזזה, הקשה לעוצמה, וכפתורי לוב ודרופ. שפת הממשק ניתנת להחלפה בתפריט.
+הקשה על המגרש = ריצה לנקודה (והגשה), לחיצה וגרירה = כיוון המכה (חץ על הרצפה
+מראה את הכיוון), וכפתורי עוצמה, לוב ודרופ. שפת הממשק ניתנת להחלפה בתפריט.
+
+המשחק הוא אפליקציה מותקנת (PWA): עובד גם בלי אינטרנט, "התקן את האפליקציה"
+בתפריט באנדרואיד, "הוסף למסך הבית" באייפון. דירוג עולמי: בוחרים כינוי פעם
+אחת, כל משחק שמסתיים מעדכן דירוג Elo מול שלוש רמות המחשב, והטבלה מוצגת
+בתפריט (פירוט והגדרת השרת ב-`docs/RANKING.md`).
 
 תיעוד מלא בתיקיית `docs/` (ארכיטקטורה, פיזיקה, חוקים, בינה מלאכותית, סטמינה,
 שליטה, רינדור ופיתוח).
