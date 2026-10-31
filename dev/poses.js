@@ -65,7 +65,7 @@ const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
 function params() {
   const q = new URLSearchParams(location.search);
   const n = (k, d) => (q.has(k) ? Number(q.get(k)) : d);
-  return { side: n('side', 1), phase: q.has('phase') ? n('phase', 0) : null, prep: n('prep', 0), ballY: n('ballY', 0.3), cam: n('cam', 35), lunge: q.has('lunge') ? n('lunge', 0) : null, run: n('run', 0), turn: n('turn', 1) };
+  return { side: n('side', 1), phase: q.has('phase') ? n('phase', 0) : null, prep: n('prep', 0), ballY: n('ballY', 0.3), cam: n('cam', 35), lunge: q.has('lunge') ? n('lunge', 0) : null, run: n('run', 0), turn: n('turn', 1), frames: n('frames', 90) };
 }
 
 /** Fake simulation state matching what PlayerModel reads from a Player. */
@@ -93,7 +93,7 @@ window.render = async function render(o = {}) {
   // Settle the smoothed parameters by stepping a few frames with the same state.
   model.prep = p.phase === null ? p.prep : 0;
   model.prepSide = p.side;
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < p.frames; i++) {
     model.update(player, ball, 1 / 60, undefined, p.phase === null ? p.turn === 1 && p.prep > 0 : false);
     if (p.lunge !== null) model.lunge = p.lunge;
   }

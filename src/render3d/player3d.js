@@ -419,7 +419,11 @@ export class PlayerModel {
     const cadence = speed / stepLen;
     if (jogW > 0.01) this.jogPhase = (this.jogPhase + cadence * dt) % 1;
     const moveDir = this._move.set(dirX, 0, dirZ);
-    const jogLift = 0.05 + 0.035 * clamp(speed / 4, 0, 1);
+    // Each foot is on the floor for JOG_STANCE of the cycle (a short flight phase in between):
+    // it touches down ahead of the hips and leaves behind them, travelling 2*JOG_STANCE*stepLen
+    // relative to the body, which is exactly what the body covers meanwhile, so it stays planted.
+    const JOG_STANCE = 0.42;
+    const jogLift = 0.09 + 0.07 * clamp(speed / 4, 0, 1);
     let jogDip = 0;
     for (let i = 0; i < 2; i++) {
       const ft = this.feet[i];
@@ -427,13 +431,15 @@ export class PlayerModel {
       if (jogW <= 0.01) continue;
       const phi = (this.jogPhase + (i === 0 ? 0 : 0.5)) % 1;
       let along, y = 0;
-      if (phi < 0.5) {
-        along = stepLen * (0.25 - phi);
-        jogDip = Math.max(jogDip, Math.sin(2 * Math.PI * phi));
+      if (phi < JOG_STANCE) {
+        const u = phi / JOG_STANCE;
+        along = 2 * JOG_STANCE * stepLen * (0.5 - u);
+        jogDip = Math.max(jogDip, Math.sin(Math.PI * u));
       } else {
-        const u = (phi - 0.5) / 0.5;
-        along = stepLen * (-0.25 + 0.5 * smooth(u));
-        y = jogLift * Math.sin(Math.PI * u);
+        // Swing: heel comes up behind the body first, then the knee drives the foot forward.
+        const u = (phi - JOG_STANCE) / (1 - JOG_STANCE);
+        along = 2 * JOG_STANCE * stepLen * (-0.5 + smooth(u));
+        y = jogLift * Math.sin(Math.PI * Math.pow(u, 0.85));
         ft.jogSwing = u;
       }
       const jog = this._jog.copy(r.position).addScaledVector(rightW, this.legs[i].side * (STANCE_HALF * 0.75 + 0.02)).addScaledVector(moveDir, along);
@@ -443,7 +449,8 @@ export class PlayerModel {
       // Keep the step system primed where the jog leaves the foot.
       if (jogW > 0.5) { ft.swing = -1; ft.planted.set(jog.x, 0, jog.z); }
     }
-    jogDip *= 0.025 * jogW;
+    // Hips lowest at mid-stance, slightly up in flight.
+    jogDip = (0.042 * jogDip - 0.012) * jogW;
     const swingMax = Math.max(this.feet[0].swing, this.feet[1].swing);
     const stepBob = (swingMax >= 0 ? Math.sin(Math.PI * swingMax) * 0.012 * (0.5 + run) : 0) * (1 - jogW);
 

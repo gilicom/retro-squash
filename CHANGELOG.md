@@ -22,6 +22,12 @@ All notable changes to this project are documented here. The format follows
   `model=1` shows the rigged character.
 
 ### Changed (movement, 2026-10-31)
+- Recovery to the T is a slower jog (2.3 m/s, urgent recoveries capped at
+  85% of top speed) while the run to the ball stays at full speed.
+- Jog stride reworked: each foot on the floor for 42% of the cycle with a
+  short flight phase, touchdown ahead of the hips and toe-off behind them,
+  heel lift of 9-16 cm with the knee driving forward, hips lowest at
+  mid-stance. Pose viewer: `frames` parameter samples the gait in time.
 - Light jog: above a shuffle the feet follow a jog cycle (short quick strides
   along the direction of travel, half a cycle planted and half swinging with a
   knee lift and toes down, hips dipping at mid-stance), blended in by speed;
