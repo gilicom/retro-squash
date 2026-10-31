@@ -40,7 +40,14 @@ export function playMatch({ seed = 1, seconds = 900, difficulty = 'normal', botD
   let t = 0;
   while (t < seconds && m.state !== 'matchover') {
     if (m.state === 'serve' && m.referee.server === 0 && m.timer < 1.0) m.serve(rand() < 0.3 ? 'lobServe' : 'serve');
-    if (m.state === 'rally') { bot.update(dt, m.ball, m.referee, m.cpu); m.returnToT = false; stats.rallyTime += dt; }
+    if (m.state === 'rally') {
+      bot.update(dt, m.ball, m.referee, m.cpu);
+      // The bot picks shots like the computer (a human arms them by input) and, off the ball,
+      // jogs back to the T through the T assist like a human with auto-T on.
+      if (m.referee.turn === 0) m.armed = bot.chooseShot(m.ball, m.cpu).shot;
+      m.returnToT = m.referee.turn !== 0;
+      stats.rallyTime += dt;
+    }
     m.update(dt, dt);
     t += dt;
     stats.minStamina[0] = Math.min(stats.minStamina[0], m.human.stamina);

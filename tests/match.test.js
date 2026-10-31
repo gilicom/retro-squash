@@ -45,7 +45,9 @@ function playMatch({ seed = 1, seconds = 600, difficulty = 'normal', botDifficul
     if (m.state === 'serve' && m.referee.server === 0 && m.timer < 1.0) m.serve(rand() < 0.3 ? 'lobServe' : 'serve');
     if (m.state === 'rally') {
       bot.update(dt, m.ball, m.referee, m.cpu);
-      m.returnToT = false; // the bot counts as player input, which cancels the T assist
+      // The bot also picks its shots like the computer does (the human arms shots by input).
+      if (m.referee.turn === 0) m.armed = bot.chooseShot(m.ball, m.cpu).shot;
+      m.returnToT = m.referee.turn !== 0; // off the ball the bot jogs back through the T assist
     }
     m.update(dt, dt);
     t += dt;

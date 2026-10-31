@@ -22,6 +22,12 @@ All notable changes to this project are documented here. The format follows
   `model=1` shows the rigged character.
 
 ### Changed (stamina and tactics, 2026-10-31)
+- Fewer misses on easy balls: the computer's positional error shrinks as the
+  ball gets close and for slow balls, grows less with distance and fatigue.
+- Concentration slips as a rally drags on (strike error +0.012 per hit, up
+  to 0.3), a brake on endless rallies; stamina never drops below 0.05. The
+  balance harness bot now picks shots like the computer and jogs back through
+  the T assist.
 - Stamina drains almost twice as fast (about 35 m of sprinting empties it)
   and refills much slower (0.018/s idle, 0.04/s on the T, 0.07/s between
   points: a full bar takes about a minute of rest); serves scatter less with

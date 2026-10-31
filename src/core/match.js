@@ -65,6 +65,7 @@ export class Match {
     this.pendingDecision = null;
     /** True while the human is jogging back to the T automatically. */
     this.returnToT = false;
+    this.rallyHits = 0;
     this._listeners = new Map();
 
     // Idle pose.
@@ -146,6 +147,7 @@ export class Match {
     this.ball.vx = v.vx; this.ball.vy = v.vy; this.ball.vz = v.vz;
     this.ball.inPlay = true;
     this.ball.trail.length = 0;
+    this.rallyHits = 0;
     server.frozen = false;
     server.startSwing(dir);
     this.state = 'rally';
@@ -301,8 +303,10 @@ export class Match {
     } else {
       ({ shot, tx } = this.ai.chooseShot(ball, this.human));
     }
-    // Tired or stretched players lose control: more scatter and less pace.
-    const error = p.fatigue * 0.8 + contactPressure(p, ball);
+    // Tired or stretched players lose control: more scatter and less pace, and concentration
+    // slips as a rally drags on (a brake on endless rallies between two accurate players).
+    const error = p.fatigue * 0.8 + contactPressure(p, ball) + Math.min(0.3, this.rallyHits * 0.012);
+    this.rallyHits++;
     const v = strikeVelocity(ball, shot, tx, this.rand, error);
     ball.vx = v.vx; ball.vy = v.vy; ball.vz = v.vz;
     this.referee.onHit(p.index);

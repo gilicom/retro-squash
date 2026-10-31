@@ -8,6 +8,8 @@
 import { Ball } from '../physics/ball.js';
 import { SHOTS, forcedShot } from '../physics/shots.js';
 import { COURT } from '../config/court.js';
+
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 import { RECOVERY_SPEED } from '../config/difficulty.js';
 import { T_POSITION, recoverySpeed } from './player.js';
 
@@ -70,10 +72,14 @@ export class AIController {
       const pred = this.predict(ball, ref);
       if (pred) {
         this.prediction = pred;
-        // Positional error grows with the distance to cover and with fatigue.
-        const far = 1 + Math.hypot(pred.x - this.p.x, pred.z - this.p.z) / 3;
-        const tired = 1 + this.p.fatigue * 1.5;
-        const e = this.d.error * far * tired;
+        // Positional error grows with the distance to cover and with fatigue, and shrinks as the
+        // ball gets close: the last look at an easy, slow ball is almost exact, so easy balls are
+        // not missed; only the hard, far ones are.
+        const far = 1 + Math.hypot(pred.x - this.p.x, pred.z - this.p.z) / 4;
+        const tired = 1 + this.p.fatigue * 0.8;
+        const late = clamp(pred.t / 1.2, 0.3, 1);
+        const easy = clamp(ball.groundSpeed / 9, 0.6, 1);
+        const e = this.d.error * far * tired * late * easy;
         this.err = { x: gauss(this.rand) * e, z: gauss(this.rand) * e * 0.6 };
       }
     }

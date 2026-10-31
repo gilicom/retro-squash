@@ -152,7 +152,8 @@ export class Player {
       const onT = this.distanceFromT < STAMINA.tRadius;
       this.stamina += (onT ? STAMINA.recoverOnT : STAMINA.recoverIdle) * this.fitness * dt;
     }
-    this.stamina = Math.min(1, Math.max(0, this.stamina));
+    // Never fully empty: an exhausted player still moves at the minimum speed factor.
+    this.stamina = Math.min(1, Math.max(0.05, this.stamina));
 
     this.runPhase += speedNow * dt * 4.5;
     if (this.swing > 0) this.swing = Math.max(0, this.swing - dt / SWING_DURATION);
