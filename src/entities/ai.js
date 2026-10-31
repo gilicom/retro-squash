@@ -12,7 +12,7 @@ import { RECOVERY_SPEED } from '../config/difficulty.js';
 import { T_POSITION, recoverySpeed } from './player.js';
 
 /** Lateral distance the player stands from the ball's path (m): racket arm's length. */
-export const STANCE_OFFSET = 0.8;
+export const STANCE_OFFSET = 0.95;
 
 /** Gaussian random number (Box-Muller). */
 export function gauss(rand = Math.random) {

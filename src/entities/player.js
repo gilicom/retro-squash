@@ -169,7 +169,7 @@ export class Player {
     // that half of the court (backhand on the left half, forehand on the right)
     // and standing beside it; a ball on the body's wrong side is cramped.
     const naturalSide = ball.x < COURT.W / 2 ? -1 : 1;
-    const limit = this.reach * (Math.sign(dx) === naturalSide ? 1.25 : 0.85);
+    const limit = this.reach * (Math.sign(dx) === naturalSide ? 1.4 : 0.85);
     return Math.abs(dz) < 0.5 && Math.abs(dx) < limit && ball.y > 0 && ball.y < 2.35;
   }
 

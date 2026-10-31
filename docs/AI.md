@@ -20,7 +20,7 @@ Every frame (`AIController.update`):
      1.25 m high and no longer rising fast, or
    - as a fallback, a volley point deeper than z = 3.5 m if the ball never
      offers a bounce.
-3. The target is **beside** the ball, not on it: 0.8 m to the right of a ball
+3. The target is **beside** the ball, not on it: 0.95 m to the right of a ball
    on the left half of the court (played as a backhand) and to the left of a
    ball on the right half (forehand), 0.15 m behind it, so contact is out in
    front on the natural side. Reach is 25 % longer on that side and 15 %

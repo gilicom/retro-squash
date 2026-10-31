@@ -157,10 +157,10 @@ export function strikeVelocity(ball, shot, tx, rand = Math.random, error = 0) {
  * @param {{x:number,y:number,z:number}} ball
  */
 export function contactPressure(p, ball) {
-  // An arm plus a racket beside the ball (about 0.8 m) is the clean position; stretching starts
+  // An arm plus a racket beside the ball (about 0.95 m) is the clean position; stretching starts
   // beyond it, and so does cramping when the ball comes in on the body.
   const dx = Math.abs(ball.x - p.x);
-  const stretch = Math.min(1, Math.max(0, dx - 0.8) / p.reach) + Math.max(0, 0.35 - dx) * 1.5;
+  const stretch = Math.min(1, Math.max(0, dx - 0.95) / p.reach) + Math.max(0, 0.45 - dx) * 1.5;
   const low = ball.y < 0.3 ? 0.35 : 0;
   const rushing = Math.min(1, Math.hypot(p.vx, p.vz) / p.speed) * 0.4;
   const behind = ball.z > p.z + 0.2 ? 0.3 : 0;
