@@ -92,7 +92,9 @@ original; skill is in positioning, timing of the shot-type buttons and stamina.
   (player id, secret key, nickname), `rating.js` (reference Elo formula),
   `ranking.js` (queue, flush, leaderboard), `providers/` (backend adapters;
   `supabase.js` uses plain `fetch`). `config/backend.js` holds the public
-  keys. `Game` reports a finished non-demo match through `onMatchFinished`;
+  keys and `isBackendConfigured()`, which is false while the placeholders
+  are in place; the database side is `supabase/schema.sql`. `Game` reports
+  a finished non-demo match through `onMatchFinished`;
   nothing in the core knows about the ranking.
 
 ### Touch aiming

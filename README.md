@@ -89,6 +89,7 @@ src/
   pwa/                  Service worker template, install prompt, wake lock, fullscreen
   ranking/              Player identity, rating formula, result queue, backend adapters
   styles/               CSS
+supabase/               schema.sql: tables, leaderboard view and the rating function (paste into Supabase)
 tests/                  node:test suites (ball, shots, referee, full matches, ranking)
 tools/                  Headless simulation, balancing, icon and service-worker build scripts
 docs/                   Design and reference documentation (see below)

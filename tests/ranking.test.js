@@ -8,6 +8,8 @@ import { ratingDelta, nextRating, expectedScore, INITIAL_RATING, MIN_RATING, CPU
 import { validateNickname, loadIdentity, IDENTITY_KEY } from '../src/ranking/identity.js';
 import { Ranking, RankingError, QUEUE_KEY } from '../src/ranking/ranking.js';
 import { aimTargetX } from '../src/core/match.js';
+import { createAdapter } from '../src/ranking/providers/index.js';
+import { isBackendConfigured } from '../src/config/backend.js';
 
 class MemoryStorage {
   constructor() { this.m = new Map(); }
@@ -162,4 +164,15 @@ test('aimed shots continue the drag direction to the front wall', () => {
   const back = aimTargetX(ball, { dx: 1, dz: 1 });
   assert.ok(Number.isFinite(side) && side > 3.2 && side < 40);
   assert.ok(Number.isFinite(back) && back > 3.2 && back < 40);
+});
+
+test('placeholder or incomplete backend config yields no adapter', async () => {
+  assert.equal(isBackendConfigured({ provider: 'supabase', url: 'https://PROJECT_REF.supabase.co', anonKey: 'YOUR_ANON_PUBLIC_KEY' }), false);
+  assert.equal(isBackendConfigured({ provider: 'supabase', url: '', anonKey: '' }), false);
+  assert.equal(isBackendConfigured({ provider: null, url: 'https://abc.supabase.co', anonKey: 'eyJx' }), false);
+  assert.equal(isBackendConfigured({ provider: 'supabase', url: 'https://abcdefghijkl.supabase.co', anonKey: 'eyJx' }), true);
+  assert.equal(await createAdapter({ provider: 'supabase', url: 'https://PROJECT_REF.supabase.co', anonKey: 'YOUR_ANON_PUBLIC_KEY' }), null);
+  const live = await createAdapter({ provider: 'supabase', url: 'https://abcdefghijkl.supabase.co', anonKey: 'eyJx' });
+  assert.equal(typeof live.submit, 'function');
+  assert.equal(typeof live.top, 'function');
 });

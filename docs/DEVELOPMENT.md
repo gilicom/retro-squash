@@ -34,8 +34,9 @@ page shows "A new version is ready"; pressing Update activates the new
 worker and reloads. `npm run build` prints the precache size.
 
 The ranking backend is configured in `src/config/backend.js` (public keys
-only); with `provider: null` the ranking screen says it is unavailable and
-results stay queued in `localStorage`. See docs/RANKING.md for the SQL.
+only); while it still holds the placeholders the ranking screen says it is
+unavailable and results stay queued in `localStorage`. The database schema
+is `supabase/schema.sql`; docs/RANKING.md has the setup steps.
 
 ## Tests
 

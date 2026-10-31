@@ -90,9 +90,11 @@ All notable changes to this project are documented here. The format follows
   computed server-side, a leaderboard screen (top 100 and your own rank) in
   English and Hebrew, results queued offline and sent later, and the
   end-of-match panel showing the new rating and rank. Supabase adapter over
-  plain `fetch`; SQL, rules and setup in `docs/RANKING.md`. Without a
-  configured backend the game plays as before and the screen says the
-  ranking is unavailable.
+  plain `fetch`; the schema is `supabase/schema.sql` (paste into the SQL
+  editor), rules and setup in `docs/RANKING.md`. `src/config/backend.js`
+  is shaped for Supabase with placeholders; until the Project URL and anon
+  key replace them (`isBackendConfigured()`), the game plays as before and
+  the screen says the ranking is unavailable.
 - Mobile pass: no tap delay on controls, 44 px minimum targets, dynamic
   viewport height, compact phone layout for the menu and leaderboard,
   landscape layout for the touch buttons, keyboard shortcuts ignored while
