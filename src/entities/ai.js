@@ -95,7 +95,10 @@ export class AIController {
   /**
    * Simulate the ball forward and return the first point where it is
    * comfortably playable (after the front wall, below shoulder height,
-   * ideally after the first bounce).
+   * ideally after the first bounce). Bounces the ball has already taken count,
+   * so a re-read after the first bounce still plays this bounce, not the next
+   * one. A ball that would only become playable deep by the back wall (or off
+   * it) is taken earlier as a volley when it passes at a comfortable height.
    * @returns {{x:number,z:number,t:number}|null}
    */
   predict(ball, ref) {
@@ -103,10 +106,12 @@ export class AIController {
     b.copyFrom(ball);
     b.inPlay = true;
     let front = ref.frontWallHit;
-    let bounces = 0;
+    let bounces = front ? ref.floorBounces : 0;
+    let back = false;
     const onEv = (type) => {
       if (type === 'frontwall') front = true;
       if (type === 'floor' && front) bounces++;
+      if (type === 'backwall' && front) back = true;
     };
     const dt = 1 / 120;
     let t = 0;
@@ -118,12 +123,20 @@ export class AIController {
       if (!front) continue;
       const low = b.y < 1.25 && b.y > 0.15;
       if (bounces >= 1 && low && b.vy <= 0.5) {
+        const deep = back || b.z > COURT.L - 0.9;
+        if (deep && volley && this.canMakeIt(volley)) return volley;
         return { x: b.x, z: b.z, t };
       }
-      // Remember a volley option in case the ball never offers a bounce.
-      if (!volley && bounces === 0 && low && b.z > 3.5) volley = { x: b.x, z: b.z, t };
+      // Remember a volley option: the ball passing at a comfortable height before it bounces.
+      if (!volley && bounces === 0 && !back && b.y < 1.9 && b.y > 0.45 && b.vy <= 1.0 && b.z > 3.5) volley = { x: b.x, z: b.z, t };
     }
     return volley;
+  }
+
+  /** Whether the player can be at a predicted point in time for it (with the racket's reach). */
+  canMakeIt(pt) {
+    const dist = Math.hypot(pt.x - this.p.x, pt.z - this.p.z);
+    return dist <= this.p.effectiveSpeed * Math.max(0, pt.t - 0.15) + this.p.reach * 0.6;
   }
 
   /**
@@ -162,6 +175,12 @@ export class AIController {
     }
     if (ball.z < 3.2 && !oppFront && r < attack + 0.35) return { shot: SHOTS.drop, tx: farSide + aimErr };
     if (ball.y > 1.0 && ball.z < 6.5 && r < attack) return { shot: SHOTS.smash, tx: farSide + aimErr };
+    // Hard cross-court: low and fast to the opposite corner, mostly when the opponent is on the
+    // ball's side of the court and has the whole width to cover; more when attacking.
+    const oppSameSide = (opponent.x > COURT.W / 2) === (ball.x > COURT.W / 2);
+    if (ball.z < 7.5 && r < (oppSameSide ? 0.35 : 0.15) + Math.max(0, attack) * 0.2) {
+      return { shot: SHOTS.cross, tx: (ball.x < COURT.W / 2 ? COURT.W - 0.45 : 0.45) + aimErr };
+    }
     // Otherwise a drive: cross-court to the far side, or straight and tight to pin them back.
     const tx = r > 0.7 ? (ball.x < COURT.W / 2 ? 0.5 : COURT.W - 0.5) : farSide;
     return { shot: SHOTS.drive, tx: tx + aimErr };

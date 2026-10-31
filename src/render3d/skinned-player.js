@@ -45,7 +45,7 @@ const UP = new THREE.Vector3(0, 1, 0);
  * at GRIP_BUTT in the palm frame (lateral toward the thumb, along the fingers, out of the palm).
  */
 const GRIP_ANGLE = 18 * Math.PI / 180;
-const GRIP_BUTT = { lat: -0.0584, fwd: 0.0682, out: 0.031 };
+const GRIP_BUTT = { lat: -0.0584, fwd: 0.0685, out: 0.016 };
 
 const kitMapCache = new Map();
 
@@ -57,8 +57,8 @@ const kitMapCache = new Map();
  * @typedef {{shirt:number, shirtAccent:number, shorts:number, shortsAccent:number, shoes:number, shoesAccent:number, sole:number}} Kit
  */
 export const KITS = Object.freeze({
-  /** Lime shirt with black piping, navy shorts, white shoes with a navy swoosh and a lime sole. */
-  you: { shirt: 0xc6ff2e, shirtAccent: 0x17181c, shorts: 0x18223d, shortsAccent: 0xc6ff2e, shoes: 0xe6e6e1, shoesAccent: 0x18223d, sole: 0xc6ff2e },
+  /** Lime shirt with navy shoulder panels and piping, navy shorts, white shoes with a navy swoosh and a lime sole. */
+  you: { shirt: 0xc6ff2e, shirtAccent: 0x18223d, shorts: 0x18223d, shortsAccent: 0xc6ff2e, shoes: 0xe6e6e1, shoesAccent: 0x18223d, sole: 0xc6ff2e },
   /** Orange shirt with white piping, black shorts, blue shoes with white trim and a white sole. */
   cpu: { shirt: 0xff8a3d, shirtAccent: 0xf2f2ee, shorts: 0x17181c, shortsAccent: 0xf2f2ee, shoes: 0x2d5ea6, shoesAccent: 0xf2f2ee, sole: 0xf2f2ee },
 });

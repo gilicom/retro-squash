@@ -25,6 +25,8 @@ import { COURT } from '../config/court.js';
 /** @type {Record<string, ShotType>} */
 export const SHOTS = Object.freeze({
   drive: { id: 'drive', ty: 1.7, speed: 19, tyJitter: 0.15 },
+  /** Hard cross-court: low and fast to the opposite back corner, past an opponent on the ball's side. */
+  cross: { id: 'cross', ty: 1.4, speed: 22, tyJitter: 0.12 },
   smash: { id: 'smash', ty: 0.78, speed: 26, tyJitter: 0.08 },
   lob: { id: 'lob', ty: 3.9, speed: 12.2, tyJitter: 0.2 },
   drop: { id: 'drop', ty: 0.62, speed: 9.5, tyJitter: 0.05 },

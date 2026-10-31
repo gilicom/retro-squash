@@ -11,8 +11,8 @@
  * - fitness:    stamina recovery multiplier (1 = same as the human)
  */
 export const DIFFICULTY = Object.freeze({
-  easy: { id: 'easy', speed: 3.0, reaction: 0.35, error: 0.45, aimError: 0.6, reach: 0.95, aggression: 0.15, fitness: 0.8 },
-  normal: { id: 'normal', speed: 3.8, reaction: 0.22, error: 0.25, aimError: 0.4, reach: 1.05, aggression: 0.3, fitness: 1.0 },
+  easy: { id: 'easy', speed: 3.0, reaction: 0.36, error: 0.5, aimError: 0.6, reach: 0.95, aggression: 0.15, fitness: 0.8 },
+  normal: { id: 'normal', speed: 3.8, reaction: 0.24, error: 0.3, aimError: 0.4, reach: 1.05, aggression: 0.3, fitness: 1.0 },
   hard: { id: 'hard', speed: 4.6, reaction: 0.12, error: 0.1, aimError: 0.22, reach: 1.15, aggression: 0.5, fitness: 1.25 },
 });
 

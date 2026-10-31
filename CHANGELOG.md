@@ -6,6 +6,33 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed (grip and tactics, 2026-10-31)
+- Grip reposed after the coaching sources on the "shake hands" grip: the
+  index finger is spread up the handle as a trigger finger, the thumb comes
+  at the handle diagonally toward the head with its pad on the near-top bevel
+  (it used to float straight along the handle), making a V with the index,
+  and the handle is pressed into the palm pad. The pose script now runs in
+  background Blender and the export drops the wristbands by itself.
+- Hard cross-court shot (`cross`: 22 m/s at 1.4 m on the front wall, to the
+  opposite back corner) added to the computer's repertoire, played mostly
+  when the opponent is on the ball's side of the court.
+- Normal and easy computers read the ball a little later and less exactly
+  (reaction 0.24 s / 0.36 s, error 0.3 / 0.5) to offset the predictor fix,
+  which made them stop missing first bounces.
+- Lime kit: navy shoulder panels and piping instead of black.
+
+
+### Fixed (computer movement, 2026-10-31)
+- The computer let the serve (and any short ball) pass to the back wall:
+  after the ball's first floor bounce its trajectory re-read started the
+  bounce count from zero, so it ran to where the ball would be after the
+  *second* bounce. It then dug the ball out of the back with a forced
+  back-wall boast, and the other side failed the short reply the same way.
+  The predictor now seeds the simulation with the bounces already taken,
+  and volleys a ball that would otherwise only be playable deep by the back
+  wall when it can reach the volley in time.
+
+
 ### Changed (kit colours, 2026-10-31)
 - The kit is no longer a matching suit: shirt, shorts and shoes are
   recoloured as separate pieces, like a real player's kit. You: lime shirt

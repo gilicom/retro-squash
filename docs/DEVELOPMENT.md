@@ -16,6 +16,7 @@
 | `npm test` | Runs `tests/**/*.test.js` with Node's test runner. No test framework to install. |
 | `npm run simulate` | Shot/serve landing tables (`tools/simulate.js`). |
 | `node tools/play-match.js [difficulty] [n]` | Headless bot-vs-AI matches with statistics. |
+| `node tools/rally-trace.mjs [difficulty]` | Headless rally traces: event sequences with player positions, endings, serve returns off the back wall. |
 | `node tools/make-icons.js` | Regenerates `public/icons/*.png` (PWA icons) from the favicon design; no image library needed. |
 | `npm run deploy` | Builds and force-pushes `dist/` to the `gh-pages` branch (`tools/deploy-pages.js`). |
 

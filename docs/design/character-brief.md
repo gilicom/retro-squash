@@ -79,11 +79,19 @@ These match the game's stroke keyframes (docs/RENDERING.md).
   the body UVs; shoes are lofted around the foot (super-ellipse sections,
   parametric UVs, painted texture, separate sole with vertex colours); hair is
   a sphere cut at an azimuth-based hairline, shrink-wrapped to the scalp and
-  displaced by noise. The right hand is posed around the handle (fingers wrap
-  a cylinder, thumb along the grip) and the pose is applied as the rest pose
-  before export so the GLB carries the grip.
-- Grip (from the coaching chart in `ref/`): the handle crosses the palm from
-  the index knuckle to the heel of the hand, the thumb and index make a V on
-  the top bevel, the index sits forward like a trigger finger, and the butt
-  rests just outside the palm. The racket is held cocked, never in line with
-  the forearm.
+  displaced by noise. The right hand is posed around the handle
+  (`tools/blender/pose_grip.py`, run in background Blender) and the pose is
+  applied as the rest pose before export so the GLB carries the grip.
+- Grip (from the coaching chart in `ref/` and the coaching sources on the
+  "shake hands" grip, 2026-10-31): the handle crosses the palm from the index
+  knuckle to the heel of the hand at 18° and is pressed 18 mm into the palm
+  pad (the thenar wraps it, as a real palm does). The index finger is spread
+  up the handle, a finger's width from the middle finger, like a trigger
+  finger, and wraps the handle there. The thumb comes at the handle
+  diagonally toward the head: the metacarpal points at the near-top bevel
+  4 cm up the handle, the proximal phalanx reaches it, the distal lies along
+  the bevel with its pad pressing the handle toward the index finger, so the
+  thumb and index make a V on top that points up the shaft. The butt rests
+  just outside the heel of the hand. The racket is held cocked, never in
+  line with the forearm. Renders: `docs/design/grip-a-palm.png`,
+  `grip-b-web.png` (the V), `grip-c-top.png`, `grip-d-back.png`.

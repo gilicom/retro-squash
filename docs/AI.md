@@ -17,9 +17,16 @@ Every frame (`AIController.update`):
    including wall bounces. The first moment the ball is playable becomes the
    target:
    - after the front wall, after its first floor bounce, between 0.15 m and
-     1.25 m high and no longer rising fast, or
-   - as a fallback, a volley point deeper than z = 3.5 m if the ball never
-     offers a bounce.
+     1.25 m high and no longer rising fast. Bounces the ball has already
+     taken count (the referee's bounce counter seeds the simulation), so a
+     re-read after the first bounce still plays this bounce; it used to wait
+     for the "first" bounce again and run to where the ball would be after
+     the second, letting serves and short balls go.
+   - When that point is deep by the back wall (or only comes off it), and the
+     ball passes earlier at a comfortable height (0.45-1.9 m, beyond z = 3.5
+     m) that the player can reach in time, the volley is taken instead: the
+     receiver attacks a serve rather than digging it out of the back.
+   - As a fallback, the volley point if the ball never offers a bounce.
 3. The target is **beside** the ball, not on it: 0.95 m to the right of a ball
    on the left half of the court (played as a backhand) and to the left of a
    ball on the right half (forehand), 0.15 m behind it, so contact is out in
@@ -50,6 +57,7 @@ own stamina is below 0.35. `r` is a uniform roll.
 | Opponent forward (more than 1 m in front of the T), r < 0.8 | **lob** (60%) or hard **drive** deep to the far corner |
 | Ball near the front (z < 3.2), opponent not forward, r < attack + 0.35 | **drop** away from the opponent |
 | Ball above 1 m in the front 6.5 m, r < attack | **smash** |
+| Ball in the front 7.5 m, opponent on the ball's side of the court, r < 0.35 + 0.2·attack (0.15 when they are on the other side) | hard **cross-court** (`cross`: low, 23 m/s) to the opposite back corner, so they have the whole width to cover |
 | Otherwise | **drive**: cross-court to the far side, or (r > 0.7) straight and tight down the near wall |
 
 A Gaussian aim error (`aimError`) is added to every target. Faster stamina
