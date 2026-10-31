@@ -22,6 +22,10 @@ All notable changes to this project are documented here. The format follows
   `model=1` shows the rigged character.
 
 ### Changed (movement, 2026-10-31)
+- Players stand further from the ball for the stroke: the computer sets up
+  0.8 m beside the ball (was 0.45 m, the racket covers the rest) and the
+  contact pressure model treats 0.8 m as the clean distance, with a cramped
+  penalty when the ball comes within 0.35 m of the body.
 - Recovery to the T is a resting jog (1.7 m/s, urgent recoveries capped at
   75% of top speed) while the run to the ball stays at full speed; stamina
   recovers while jogging (effort below 45% of top speed no longer drains).
