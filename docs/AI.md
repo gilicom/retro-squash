@@ -36,16 +36,26 @@ the AI's turn, `Match._strike` asks `chooseShot`.
 
 ## Shot selection (`chooseShot`)
 
-| Situation | Choice |
-| --- | --- |
-| Ball near the front (z < 3.2) and roll < aggression + 0.35 | **drop** away from the opponent |
-| Opponent forward (z < 4.8), 75 % | **lob** (aimed near the centre so it stays in) or hard **drive** past them |
-| Ball above 1.0 m and in front of mid-court, roll < aggression | **smash** |
-| Ball deep behind the body | **forced**: boast from a back corner, back-wall boast from the middle (`forcedShot`) |
-| Ball in a back corner, opponent deep (z > 5.5), roll < 0.6 × aggression | attacking **boast** to drag the opponent forward |
-| Otherwise | **drive** to the side wall away from the opponent; 18 % of the time a cross-court instead |
+The opponent's position decides the shot. `farSide` is the back corner away
+from the opponent; `attack` is the difficulty's aggression, +0.3 against an
+opponent whose stamina is below 0.4, and −1 (no touch shots) when the computer's
+own stamina is below 0.35. `r` is a uniform roll.
 
-A Gaussian aim error (`aimError`) is added to the target x.
+| Situation (checked in this order) | Shot |
+| --- | --- |
+| Ball deep behind the body | **forced**: boast from a back corner, back-wall boast from the middle (`forcedShot`) |
+| Opponent deep (more than 1 m behind the T), ball in the front 4 m, r < 0.45 + 0.5·attack | **drop** away from the opponent |
+| Opponent deep, ball in a back corner, r < 0.35 + 0.5·attack | attacking **boast** out of the corner |
+| Opponent deep, ball in the back half (not in a corner), r < 0.15 + 0.4·attack | attacking **boast** |
+| Opponent forward (more than 1 m in front of the T), r < 0.8 | **lob** (60%) or hard **drive** deep to the far corner |
+| Ball near the front (z < 3.2), opponent not forward, r < attack + 0.35 | **drop** away from the opponent |
+| Ball above 1 m in the front 6.5 m, r < attack | **smash** |
+| Otherwise | **drive**: cross-court to the far side, or (r > 0.7) straight and tight down the near wall |
+
+A Gaussian aim error (`aimError`) is added to every target. Faster stamina
+drain (2026-10-31) makes these choices matter: a tired player's shots scatter
+(`fatigue` feeds the strike error) and a tired opponent is attacked with short
+balls.
 
 ## Difficulty table (`src/config/difficulty.js`)
 

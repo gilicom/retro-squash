@@ -21,6 +21,15 @@ All notable changes to this project are documented here. The format follows
   orientations are read from the file. Procedural bodies remain the fallback. Pose viewer
   `model=1` shows the rigged character.
 
+### Changed (stamina and tactics, 2026-10-31)
+- Stamina drains almost twice as fast (about 35 m of sprinting empties it)
+  and refills a little slower; serves scatter less with fatigue than other
+  shots.
+- The computer picks shots by the opponent's position: drops and attacking
+  boasts when the opponent is deep behind the T, lobs and hard drives when
+  they are forward, tight straight drives otherwise; it attacks a tired
+  opponent more and plays safe when tired itself (docs/AI.md).
+
 ### Changed (movement, 2026-10-31)
 - Economical footwork: strides of 0.5-1.5 m (2-4 steps from the T to any
   corner) with a shorter stance and longer flight at speed; fewer small

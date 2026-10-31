@@ -130,30 +130,35 @@ export class AIController {
     const r = this.rand();
     const farSide = opponent.x > COURT.W / 2 ? 0.7 : COURT.W - 0.7;
     const aimErr = gauss(this.rand) * this.d.aimError;
-    let shot = SHOTS.drive;
-    let tx = farSide;
 
     const forced = forcedShot(this.p, ball);
-    if (forced) return { shot: forced, tx };
-    if (ball.z > COURT.L - 1.6 && (ball.x < 0.9 || ball.x > COURT.W - 0.9) && opponent.z > 5.5 && r < this.d.aggression * 0.6) {
-      // Opponent deep: a boast out of the back corner drags them to the front.
-      return { shot: SHOTS.boast, tx };
+    if (forced) return { shot: forced, tx: farSide };
+
+    // Where the opponent is decides the shot: short balls when they are deep, deep balls
+    // when they are forward, and a tired opponent is made to run.
+    const oppDeep = opponent.z > T_POSITION.z + 1.0;
+    const oppFront = opponent.z < T_POSITION.z - 1.0;
+    // Attack more against a tired opponent; play safe (no touch shots) when tired oneself.
+    const tiredSelf = this.p.stamina < 0.35;
+    const attack = tiredSelf ? -1 : this.d.aggression + (opponent.stamina < 0.4 ? 0.3 : 0);
+    const inBackCorner = ball.z > COURT.L - 1.8 && (ball.x < 1.0 || ball.x > COURT.W - 1.0);
+    if (oppDeep) {
+      // Drop from the front or mid-court, boast out of the back: they must run the full length.
+      if (ball.z < 4.0 && r < 0.3 + attack * 0.4) return { shot: SHOTS.drop, tx: farSide + aimErr };
+      if (inBackCorner && r < 0.35 + attack * 0.5) return { shot: SHOTS.boast, tx: farSide };
+      if (ball.z > 5.5 && ball.z <= COURT.L - 1.8 && r < 0.1 + attack * 0.3) return { shot: SHOTS.boast, tx: farSide };
     }
-    if (ball.z < 3.2 && r < this.d.aggression + 0.35) {
-      // Close to the front wall: drop shot away from the opponent.
-      shot = SHOTS.drop;
-      tx = farSide;
-    } else if (opponent.z < 4.8 && r < 0.75) {
-      // Opponent is forward: lob over them, or drive hard past them.
-      shot = this.rand() < 0.65 ? SHOTS.lob : SHOTS.drive;
-      tx = shot === SHOTS.lob ? COURT.W / 2 + (farSide - COURT.W / 2) * 0.45 : farSide;
-    } else if (ball.y > 1.0 && ball.z < 6.5 && r < this.d.aggression) {
-      shot = SHOTS.smash;
-      tx = farSide;
-    } else if (r > 0.82) {
-      // Occasionally a cross-court or a straight drive down the near wall.
-      tx = ball.x < COURT.W / 2 ? COURT.W - 0.6 : 0.6;
+    if (oppFront && r < 0.8) {
+      // Over or past them, deep to the far corner.
+      const shot = this.rand() < 0.6 ? SHOTS.lob : SHOTS.drive;
+      const tx = shot === SHOTS.lob ? COURT.W / 2 + (farSide - COURT.W / 2) * 0.45 : farSide;
+      return { shot, tx: tx + aimErr };
     }
-    return { shot, tx: tx + aimErr };
+    if (ball.z < 3.2 && !oppFront && r < attack + 0.35) return { shot: SHOTS.drop, tx: farSide + aimErr };
+    if (ball.y > 1.0 && ball.z < 6.5 && r < attack) return { shot: SHOTS.smash, tx: farSide + aimErr };
+    // Otherwise a drive: cross-court to the far side, or straight and tight to pin them back.
+    const tx = r > 0.7 ? (ball.x < COURT.W / 2 ? 0.5 : COURT.W - 0.5) : farSide;
+    return { shot: SHOTS.drive, tx: tx + aimErr };
   }
+
 }

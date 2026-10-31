@@ -142,7 +142,7 @@ export class Match {
     const shot = SHOTS[shotId];
     const dir = side === 'R' ? -1 : 1;
     const tx = COURT.W / 2 + dir * 0.4 + (this.rand() - 0.5) * 0.5;
-    const v = strikeVelocity(this.ball, shot, tx, this.rand, server.fatigue * 0.5);
+    const v = strikeVelocity(this.ball, shot, tx, this.rand, server.fatigue * 0.25);
     this.ball.vx = v.vx; this.ball.vy = v.vy; this.ball.vz = v.vz;
     this.ball.inPlay = true;
     this.ball.trail.length = 0;
