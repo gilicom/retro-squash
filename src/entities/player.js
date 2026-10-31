@@ -39,9 +39,9 @@ export function recoverySpeed(player, ball, opponent, jog) {
     : Math.hypot(ball.x - opponent.x, ball.z - opponent.z);
   // Wall and floor contacts take pace off, so the average speed is below the current one.
   const timeAvailable = Math.max(0.25, path / Math.max(1, ball.groundSpeed * 0.8)) + 0.1;
-  const needed = (player.distanceFromT / timeAvailable) * 1.2;
+  const needed = (player.distanceFromT / timeAvailable) * 1.3;
   // Even an urgent recovery stays below the sprint to the ball.
-  return Math.min(Math.max(jog, needed), player.effectiveSpeed * 0.75);
+  return Math.min(Math.max(jog, needed), player.effectiveSpeed * 0.8);
 }
 
 export class Player {

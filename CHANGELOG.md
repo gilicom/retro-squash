@@ -6,6 +6,33 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed (footfalls, split step, T and corners, 2026-11-01)
+- Runs are now discrete footfalls driven by the distance the hips cover: from
+  the T a ball is reached in 2-4 footfalls, the last one the lunge on the
+  stroke's front foot (right-left-right into the back-left corner), the first
+  pushing straight off the split-step landing; no shuffle steps before,
+  during or after, and the lunge is held while waiting for the ball. The
+  back leg of the stance now trails along the lunge. Keyboard runs roll
+  footfalls from the speed.
+- The split step reads: a 6 cm hop (was 3.5), deeper load, landing 9 cm
+  wider with the knees absorbing 7 cm.
+- The computer holds the T: it recovers 0.3 m beside the T (was 0.55) at up
+  to 80 % of top speed when the ball is about to be struck, and is within
+  0.6 m of the T at 80 % of the opponent's strikes (was 44 %).
+- The computer aims at the corners: drives, cross-courts and lobs are aimed
+  at the front-wall point that lands the ball in a back corner (mirror
+  geometry), drives and lobs are lifted under pressure so they still reach
+  the back, boasts are played safe under pressure, drops are not attempted
+  from a stretched or tired contact, and a ball running on to the back wall
+  is let come off it and driven instead of boasted on the way in. The hard
+  cross-court now lands in the far back corner (1.6 m on the front wall, 22
+  m/s; it used to meet the side wall first and sit up in mid-court).
+- Tools: `t-and-corners.mjs` (T recovery, first bounces, endings by shot),
+  `shot-depth.mjs` (clean landings and sweeps), `match-log.mjs` (one match
+  rally by rally); `stride-check.mjs` reports the footfall order and
+  keyboard runs. `play-match.js` endings are keyed by the winner (documented).
+
+
 ### Changed (strides and the back corner, 2026-10-31)
 - Runs are planned in strides: from the T any corner is reached in 2-4
   footfalls, the last one the lunge (footfall length from the distance to the

@@ -347,7 +347,12 @@ export class Match {
     // slips as a rally drags on (a brake on endless rallies between two accurate players).
     const error = p.fatigue * 0.8 + contactPressure(p, ball) + Math.min(0.3, this.rallyHits * 0.012);
     this.rallyHits++;
-    const v = strikeVelocity(ball, shot, tx, this.rand, error);
+    // Players play for length: under pressure a drive or lob is lifted (higher on the
+    // front wall, the pace loss stays) so the ball still reaches the back corner instead of
+    // dropping short in mid-court.
+    const lifted = (shot === SHOTS.drive || shot === SHOTS.lob) && error > 0.1
+      ? { ...shot, ty: shot.ty + 0.3 * Math.min(error, 1.2) } : shot;
+    const v = strikeVelocity(ball, lifted, tx, this.rand, error);
     ball.vx = v.vx; ball.vy = v.vy; ball.vz = v.vz;
     this.referee.onHit(p.index);
     p.startSwing(ball.x - p.x);

@@ -123,13 +123,13 @@ Magazine's movement series, both linked in the README):
 | Situation | Pose |
 | --- | --- |
 | **Ready stance** (slow or still, ball in play) | A squat on the T: both feet toward the front wall, a little wider than the hips, knees well bent (hips ~13 cm lower than standing), forward lean, racket up in front, a slow breathing sway. While waiting for the opponent's shot the body stays square to the front wall and only the head turns to watch; the body turns toward the ball once it is this player's. A running body straightens the knees. |
-| **Split step** (timed to the opponent's contact) | Triggered by the start of the opponent's swing (its contact comes 0.12 s later): the knees load for 0.07 s (2 cm dip), then both feet leave the floor for 0.2 s (3.5 cm hop, toes pointing down) so the player is in the air as the racket meets the ball and lands ~0.17 s after it, feet 5 cm wider each, the knees absorbing the landing (hips 5 cm down) and releasing into the first stride (0.28 s). In the air the feet re-centre under the body; no stride starts while airborne. Never on a timer. |
+| **Split step** (timed to the opponent's contact) | Triggered by the start of the opponent's swing (its contact comes 0.12 s later): the knees load for 0.09 s (3.5 cm dip), then both feet leave the floor for 0.2 s (6 cm hop, toes pointing down) so the player is in the air as the racket meets the ball and lands ~0.17 s after it, feet 9 cm wider each, the knees absorbing the landing (hips 7 cm down, 0.3 s). The first stride pushes straight off that landing (the run's first footfall leaves as soon as the feet are down). In the air the feet re-centre under the body; no footfall starts while airborne. Never on a timer. |
 | **Side shuffle** (movement mostly along x) | Body stays square to the front wall; the lead leg steps out and the trailing leg closes; torso leans into the direction. No running stride. |
 | **Running forward** (toward the front wall) | Short quick strides, strong knee fold behind, forward lean, left arm pumping; the racket is prepared early (raised further as speed grows). Vertical bob is kept small: good movement is quiet. |
 | **Backpedalling** (toward the back wall) | Shorter strides under the body, body opened toward the corner it is moving to. |
 | **Back corner** (ball within 1.7 m of the back wall, this player's ball) | The body turns further toward the back wall for the preparation (forehand 43°, backhand 26° past the usual turn) so the ball is dug out facing the corner, the turn unwinding through the swing; the hips are kept 0.5 m off the back wall and 0.45 m off the side walls (`BOUNDS`), so the body never backs through the glass. |
 | **Push-off** (after this player's own shot, when the rally goes on) | A smaller hop (2.5 cm, 0.18 s) at the follow-through: the feet come out of the lunge and under the body (the lunge releases faster in the air), a light landing (hips 3 cm down, 0.22 s), then the jog back to the T. |
-| **Lunge** (last 0.9 m before the target while moving fast, or reaching for a ball during the stroke) | Hips drop ~22 cm, the leg on the lunge side extends toward the ball with a deep knee bend, the other leg trails straight, torso over the front knee, free arm out for balance. |
+| **Lunge** (last 0.9 m before the target while moving fast, or reaching for a ball during the stroke) | Hips drop ~22 cm, the front leg extends toward the ball with a deep knee bend, the back leg trails extended behind along the lunge, torso over the front knee, free arm out for balance. When it is this player's ball the lunge is made on the stroke's front foot (right foot for a backhand), so no stance change is needed before the swing; arrived early, the lunge is held until the ball comes (no standing up and stepping about). In the stroke the lunge goes toward the front wall for a mid-court ball and toward the ball itself in a back corner. |
 | **Stroke** | Shoulders and hips turn toward the side wall on the ball side; high backswing → contact out in front at 30 % → follow-through across the body at 75 % → back to ready. Lift adapts to ball height (low balls are scooped). Forehand and backhand are mirrored sets. |
 
 **Footsteps**: feet never slide. Each foot has a planted world position.
@@ -145,25 +145,33 @@ heel raised in a stroke stance. The hips drop when the feet are far apart so
 the legs can reach, which is what makes a lunge low. A teleport (new rally)
 resets the feet under the body.
 
-**Strides** (`player3d.js`, stride plan and jog cycle): squash footwork is
-economical, a split step and then 2-4 long strides from the T to any corner,
-the last one the lunge. So when a run starts (target more than 0.7 m away,
-moving) the footfall length is planned from the distance: the distance minus
-the lunge's 0.7 m is divided into 1-3 footfalls of 0.8-1.6 m, re-planned only
-when the target moves by more than 0.6 m. The leading foot stays planted for a
-full stance and the trailing foot swings a full stride first, no shuffle
-steps start during the run, and the staggered stroke stance is only taken on
-arrival. The jog cycle then runs on that stride: cadence = speed / stride
-(two footfalls), each foot planted while the body passes over it for the
-fraction of the cycle in which the body covers the foot's travel (so a
-planted foot really stays put: 30-60 % of the cycle, the feet up to 0.65 m
-ahead and behind the hips, the hips dropping to let the legs reach), then
-swinging forward with a heel lift of 9-16 cm and toes down. Without a plan
-(short moves) the stride grows with speed, 0.5-1.5 m. The blend weight ramps
-with speed and is removed by lunges and strokes, and the step system is kept
-primed under the jog so the lunge lands cleanly; once settled in a stroke or
-lunge stance the feet stay where the last stride left them (no fidgeting).
-`node tools/stride-check.mjs` counts footfalls per run.
+**Footfalls** (`player3d.js`, strides section and `_planStrides`): a run
+is a sequence of discrete footfalls driven by the distance the hips have
+covered, not by time, so a planted foot never slides and each footfall lands
+exactly where the body is when it gets there (its landing point is re-aimed
+every frame until it touches down). Squash footwork is economical: a split
+step and then 2-4 footfalls from the T to any ball, the last one the lunge.
+When a run starts (target more than 0.7 m away) the footfalls are laid out
+from the distance: the last footfall is the lunge, landing where the stroke
+stance wants its front foot (the right foot for a backhand, so into the
+back-left corner it is right-left-right); the footfall before it ends about
+0.6 m behind the hips as the back leg of that stance; the footfalls up to
+there are spaced evenly, about 1.3 m apart (never more than 1.55 m), and
+alternate back from the lunge foot. The first footfall leaves at once (off
+the split-step landing), the following ones when the hips are 0.3 m past the
+foot that made the one before last, each landing 0.3-0.4 m ahead of the hips
+with a 9-16 cm heel lift and toes down; the hips are lowest at mid-stance and
+a little up in flight. The plan is re-laid when the target moves by more than
+0.6 m (footfalls already made keep their slot). Without a destination (the
+keyboard keeps the target just ahead of the body) footfalls roll on at a
+length set by the speed (0.8-1.35 m). No shuffle steps start while a run is
+on or starting; the step system only takes over once the run is over, and
+once settled in a stroke or lunge stance the feet stay where the last
+footfall left them unless the stance has really moved (0.6 m). The physics
+player overshoots its target by a few centimetres and drifts back at about
+0.5 m/s; a run is never started on that. `node tools/stride-check.mjs`
+counts footfalls per run (expect `R L R` into the back-left corner and no
+shuffles; `VERBOSE=1` prints where each footfall lands).
 
 **Body orientation**: the body follows the ball. When it is the player's
 ball the hips turn 90° to the stroke's side wall as soon as they start

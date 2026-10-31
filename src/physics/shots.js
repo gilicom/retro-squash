@@ -26,7 +26,7 @@ import { COURT } from '../config/court.js';
 export const SHOTS = Object.freeze({
   drive: { id: 'drive', ty: 1.7, speed: 19, tyJitter: 0.15 },
   /** Hard cross-court: low and fast to the opposite back corner, past an opponent on the ball's side. */
-  cross: { id: 'cross', ty: 1.4, speed: 22, tyJitter: 0.12 },
+  cross: { id: 'cross', ty: 1.6, speed: 22, tyJitter: 0.12 },
   smash: { id: 'smash', ty: 0.78, speed: 26, tyJitter: 0.08 },
   lob: { id: 'lob', ty: 3.9, speed: 12.2, tyJitter: 0.2 },
   drop: { id: 'drop', ty: 0.62, speed: 9.5, tyJitter: 0.05 },
@@ -49,8 +49,10 @@ export const SHOTS = Object.freeze({
 export function boastVelocity(ball, shot, rand = Math.random, error = 0) {
   const wallX = ball.x < COURT.W / 2 ? 0.02 : COURT.W - 0.02;
   const tz = Math.max(1.2, Math.min(3.2, ball.z * 0.32)) + (rand() - 0.5) * 0.4 * (1 + error);
-  const ty = shot.ty - error * 0.3 + (rand() - 0.5) * 2 * shot.tyJitter * (1 + error * 2);
-  return aimAt(ball, wallX, Math.max(ty, 0.3), shot.speed * (1 - Math.min(error, 1.5) * 0.12), tz);
+  // A pressed boast is played safe (lifted) rather than lower: it still has to clear the tin
+  // after the side wall, so the height loss under pressure is small and floored.
+  const ty = shot.ty - error * 0.15 + (rand() - 0.5) * 2 * shot.tyJitter * (1 + error * 2);
+  return aimAt(ball, wallX, Math.max(ty, 0.55), shot.speed * (1 - Math.min(error, 1.5) * 0.12), tz);
 }
 
 /**

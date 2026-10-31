@@ -17,7 +17,10 @@
 | `npm run simulate` | Shot/serve landing tables (`tools/simulate.js`). |
 | `node tools/play-match.js [difficulty] [n]` | Headless bot-vs-AI matches with statistics. |
 | `node tools/rally-trace.mjs [difficulty]` | Headless rally traces: event sequences with player positions, endings, serve returns off the back wall. |
-| `node tools/stride-check.mjs` | Footfalls per run from the T to each corner and back, through the animation solver (expect 2-4). |
+| `node tools/stride-check.mjs` | Footfalls per run from the T to each corner and back, and on keyboard-style runs, through the animation solver (expect 2-4 strides, `R L R` into the back-left corner, no shuffles; `VERBOSE=1` prints where each footfall lands). |
+| `node tools/t-and-corners.mjs [difficulty]` | How well the computer holds the T (distance at the opponent's strike), where its shots first bounce by shot type, and rally endings by the last shot played. |
+| `node tools/shot-depth.mjs` | Clean landing of each shot type from mid-court and ty/speed sweeps for the drive and the cross. |
+| `node tools/match-log.mjs [seed] [difficulty]` | One match rally by rally: winner, fault, last shot, racket contacts, stamina. |
 | `node tools/make-icons.js` | Regenerates `public/icons/*.png` (PWA icons) from the favicon design; no image library needed. |
 | `npm run deploy` | Builds and force-pushes `dist/` to the `gh-pages` branch (`tools/deploy-pages.js`). |
 
