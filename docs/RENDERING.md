@@ -127,6 +127,7 @@ Magazine's movement series, both linked in the README):
 | **Side shuffle** (movement mostly along x) | Body stays square to the front wall; the lead leg steps out and the trailing leg closes; torso leans into the direction. No running stride. |
 | **Running forward** (toward the front wall) | Short quick strides, strong knee fold behind, forward lean, left arm pumping; the racket is prepared early (raised further as speed grows). Vertical bob is kept small: good movement is quiet. |
 | **Backpedalling** (toward the back wall) | Shorter strides under the body, body opened toward the corner it is moving to. |
+| **Back corner** (ball within 1.7 m of the back wall, this player's ball) | The body turns further toward the back wall for the preparation (forehand 43°, backhand 26° past the usual turn) so the ball is dug out facing the corner, the turn unwinding through the swing; the hips are kept 0.5 m off the back wall and 0.45 m off the side walls (`BOUNDS`), so the body never backs through the glass. |
 | **Push-off** (after this player's own shot, when the rally goes on) | A smaller hop (2.5 cm, 0.18 s) at the follow-through: the feet come out of the lunge and under the body (the lunge releases faster in the air), a light landing (hips 3 cm down, 0.22 s), then the jog back to the T. |
 | **Lunge** (last 0.9 m before the target while moving fast, or reaching for a ball during the stroke) | Hips drop ~22 cm, the leg on the lunge side extends toward the ball with a deep knee bend, the other leg trails straight, torso over the front knee, free arm out for balance. |
 | **Stroke** | Shoulders and hips turn toward the side wall on the ball side; high backswing → contact out in front at 30 % → follow-through across the body at 75 % → back to ready. Lift adapts to ball height (low balls are scooped). Forehand and backhand are mirrored sets. |
@@ -144,16 +145,25 @@ heel raised in a stroke stance. The hips drop when the feet are far apart so
 the legs can reach, which is what makes a lunge low. A teleport (new rally)
 resets the feet under the body.
 
-**Jog** (`player3d.js`, jog cycle): once the player moves faster than a
-shuffle (speed above about 0.7 m/s) the feet leave the step system for a
-light jog: step length 0.5-1.5 m growing with speed (2-4 strides from the T
-to any corner), cadence = speed / step length, each foot planted while the
-body passes over it (42% of the cycle at a jog, down to 30% with a longer
-flight phase at a sprint, the feet never more than 0.9 m apart) and swinging
-forward for the rest with a heel lift of 9-16 cm and toes down, the hips
-lowest at mid-stance. The blend
-weight ramps with speed and is removed by lunges and strokes, and the step
-system is kept primed under the jog so stopping lands cleanly.
+**Strides** (`player3d.js`, stride plan and jog cycle): squash footwork is
+economical, a split step and then 2-4 long strides from the T to any corner,
+the last one the lunge. So when a run starts (target more than 0.7 m away,
+moving) the footfall length is planned from the distance: the distance minus
+the lunge's 0.7 m is divided into 1-3 footfalls of 0.8-1.6 m, re-planned only
+when the target moves by more than 0.6 m. The leading foot stays planted for a
+full stance and the trailing foot swings a full stride first, no shuffle
+steps start during the run, and the staggered stroke stance is only taken on
+arrival. The jog cycle then runs on that stride: cadence = speed / stride
+(two footfalls), each foot planted while the body passes over it for the
+fraction of the cycle in which the body covers the foot's travel (so a
+planted foot really stays put: 30-60 % of the cycle, the feet up to 0.65 m
+ahead and behind the hips, the hips dropping to let the legs reach), then
+swinging forward with a heel lift of 9-16 cm and toes down. Without a plan
+(short moves) the stride grows with speed, 0.5-1.5 m. The blend weight ramps
+with speed and is removed by lunges and strokes, and the step system is kept
+primed under the jog so the lunge lands cleanly; once settled in a stroke or
+lunge stance the feet stay where the last stride left them (no fidgeting).
+`node tools/stride-check.mjs` counts footfalls per run.
 
 **Body orientation**: the body follows the ball. When it is the player's
 ball the hips turn 90° to the stroke's side wall as soon as they start

@@ -15,6 +15,8 @@ import { T_POSITION, recoverySpeed } from './player.js';
 
 /** Lateral distance the player stands from the ball's path (m): racket arm's length. */
 export const STANCE_OFFSET = 0.95;
+/** Slowest run to the ball, as a fraction of top speed: a brisk stride even with time to spare. */
+const PACE_FRACTION = 0.7;
 
 /** Gaussian random number (Box-Muller). */
 export function gauss(rand = Math.random) {
@@ -38,6 +40,7 @@ export class AIController {
     this.timer = 0;
     this.prediction = null;
     this.err = { x: 0, z: 0 };
+    this.predAge = 0;
     this.scratch = new Ball();
   }
 
@@ -66,12 +69,13 @@ export class AIController {
       this.p.speedCap = recoverySpeed(this.p, ball, opponent, RECOVERY_SPEED);
       return;
     }
-    this.p.speedCap = Infinity;
+    this.predAge += dt;
     if (this.timer <= 0) {
       this.timer = this.d.reaction;
       const pred = this.predict(ball, ref);
       if (pred) {
         this.prediction = pred;
+        this.predAge = 0;
         // Positional error grows with the distance to cover and with fatigue, and shrinks as the
         // ball gets close: the last look at an easy, slow ball is almost exact, so easy balls are
         // not missed; only the hard, far ones are.
@@ -89,6 +93,13 @@ export class AIController {
       // behind it so the contact is in front of the body.
       const side = this.prediction.x < COURT.W / 2 ? 1 : -1;
       this.p.setTarget(this.prediction.x + side * STANCE_OFFSET + this.err.x, this.prediction.z + 0.15 + this.err.z);
+      // Pace the run to the ball: arrive a little early at the speed that gets there in time, not
+      // at a sprint that ends in a shuffle; a brisk stride at least, never slower than needed.
+      const timeLeft = Math.max(0.2, this.prediction.t - this.predAge - 0.25);
+      const dist = Math.hypot(this.p.targetX - this.p.x, this.p.targetZ - this.p.z);
+      this.p.speedCap = Math.max(this.p.speed * PACE_FRACTION, (dist / timeLeft) * 1.3);
+    } else {
+      this.p.speedCap = Infinity;
     }
   }
 

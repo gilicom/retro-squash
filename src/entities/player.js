@@ -9,8 +9,8 @@ import { STAMINA } from '../config/difficulty.js';
 
 /** Movement bounds (m). Players may not stand inside the walls. */
 export const BOUNDS = Object.freeze({
-  minX: 0.35, maxX: COURT.W - 0.35,
-  minZ: 0.8, maxZ: COURT.L - 0.35,
+  minX: 0.45, maxX: COURT.W - 0.45,
+  minZ: 0.8, maxZ: COURT.L - 0.5,
 });
 
 /** The T: where the short line meets the half-court line. Players recover here. */

@@ -182,6 +182,8 @@ export class PlayerModel {
     this._move = new THREE.Vector3();
     this._jog = new THREE.Vector3();
     this.jogPhase = 0;
+    /** Stride plan of the current run: target and footfall length (m). */
+    this.runPlan = null;
     this._m = new THREE.Matrix4();
     this._x = new THREE.Vector3();
     this._y = new THREE.Vector3();
@@ -333,6 +335,25 @@ export class PlayerModel {
     if (lungeT > 0.05) { this.lungeX = ease(this.lungeX, lx, dt, 12); this.lungeZ = ease(this.lungeZ, lz, dt, 12); }
     const run = this.run, lat = this.lateral, fwd = this.forward, bwd = this.backward, lunge = this.lunge;
 
+    // Stride plan. Squash footwork is economical: from the T any corner is reached in 2-4
+    // footfalls, the last one the lunge into the stance. So the footfall length of a run is set
+    // from the distance to the target when the run starts (re-planned when the target moves),
+    // not from the speed: long, low strides, and no shuffle steps before or after them.
+    const moveDir = this._move.set(dirX, 0, dirZ);
+    let planNew = false;
+    if (distToTarget > 0.7 && speed > 0.25 && !inStroke) {
+      const plan = this.runPlan;
+      if (!plan || Math.hypot(p.targetX - plan.tx, p.targetZ - plan.tz) > 0.6) {
+        const d = Math.max(0.3, distToTarget - 0.7);          // the lunge covers the last 0.7 m
+        const n = clamp(Math.round(d / 1.3), 1, 3);             // jog footfalls before the lunge
+        this.runPlan = { tx: p.targetX, tz: p.targetZ, footLen: clamp(d / n, 0.8, 1.6) };
+        planNew = !plan;
+      }
+    } else if (speed < 0.25 || inStroke) {
+      this.runPlan = null;
+    }
+    const planned = this.runPlan !== null;
+
     // ------------------------------------------------ stroke pose
     const pose = this.pose;
     if (swingT >= 0) {
@@ -348,8 +369,10 @@ export class PlayerModel {
         // The body turns toward the side wall already while moving to the ball.
         this.prepPose.yaw *= 1 - 0.3 * run;
         this.prepPose.shoulders *= 1 - 0.3 * run;
-        this.prepPose.step *= 1 - run;
-        this.prepPose.wide *= 1 - run;
+        // The staggered stance is taken on arrival, not stepped into before the run starts.
+        const near = 1 - clamp((distToTarget - 0.3) / 0.6, 0, 1);
+        this.prepPose.step *= (1 - run) * near;
+        this.prepPose.wide *= (1 - run) * near;
         this.prepPose.knee *= 1 - 0.5 * run;
         blendPose(pose, this.prepPose, this.prep);
       }
@@ -375,10 +398,13 @@ export class PlayerModel {
     if (bwd > 0.1) face = -Math.sign(dirX || 1) * 0.5 * bwd;
     if (fwd > 0.1) face += -dirX * 0.25 * fwd;
     if (ball.inPlay) {
-      // Waiting for the opponent's shot the feet stay toward the front wall (the head watches);
-      // the body turns toward the ball once it is ours.
       const follow = clamp(yawToBall, -1.3, 1.3) * (myTurn ? 0.6 : 0.3);
-      face = lerp(face + follow, face + pose.yaw, clamp(Math.max(this.prep, swingT >= 0 ? 1 : 0), 0, 1));
+      // A ball in a back corner is dug out facing the corner: the body turns further toward the
+      // back wall for the preparation (the turn unwinds through the swing), so it never backs
+      // through the glass.
+      const corner = clamp((ball.z - (COURT.L - 1.7)) / 1.0, 0, 1) * (1 - clamp(swingT >= 0 ? swingT * 1.4 : 0, 0, 1));
+      const cornerYaw = pose.yaw + corner * ((swingT >= 0 ? side : this.prepSide) > 0 ? -0.75 : 0.45);
+      face = lerp(face + follow, face + cornerYaw, clamp(Math.max(this.prep, swingT >= 0 ? 1 : 0), 0, 1));
     } else {
       face += pose.yaw;
     }
@@ -422,7 +448,10 @@ export class PlayerModel {
         const dist = Math.hypot(ft.planted.x - rest.x, ft.planted.z - rest.z);
         const otherRest = this._rest[1 - i];
         const otherDist = Math.hypot(ot.planted.x - otherRest.x, ot.planted.z - otherRest.z);
-        const threshold = 0.2 + 0.08 * Math.min(speed, 4);
+        // No shuffle steps during a planned run (the strides do the moving) and no fidgeting once
+        // settled in a stroke or lunge stance: the feet stay where the last stride left them.
+        const settled = speed < 0.7 && distToTarget < 0.4 && (this.prep > 0.5 || lunge > 0.05);
+        const threshold = planned && lunge < 0.1 ? 0.9 : settled ? 0.42 : 0.2 + 0.08 * Math.min(speed, 4);
         if (dist > threshold && dist >= otherDist - 0.02) {
           ft.swing = 0;
           ft.from.copy(ft.planted);
@@ -445,19 +474,25 @@ export class PlayerModel {
     // quick strides along the direction of travel, each foot planted for half a cycle and swinging
     // forward with a knee lift for the other half, the hips dipping at mid-stance. Blended in by
     // speed; lunges and stroke stances stay with the step system, which is kept primed underneath.
-    const jogW = smooth(clamp((speed - 0.7) / 0.7, 0, 1)) * (1 - clamp(lunge * 1.5, 0, 1)) * (inStroke ? 0 : 1);
-    // Squash footwork is economical: long strides, 2-4 steps from the T to any corner.
-    const stepLen = clamp(0.45 + 0.24 * speed, 0.5, 1.5);
+    const jogW = smooth(clamp(planned ? (speed - 0.3) / 0.5 : (speed - 0.7) / 0.7, 0, 1)) * (1 - clamp(lunge * 1.5, 0, 1)) * (inStroke ? 0 : 1);
+    // stepLen is a full cycle (two footfalls).
+    const stepLen = planned ? 2 * this.runPlan.footLen : clamp(0.45 + 0.24 * speed, 0.5, 1.5);
     const cadence = speed / stepLen;
-    if (jogW > 0.01) this.jogPhase = (this.jogPhase + cadence * dt) % 1;
-    const moveDir = this._move.set(dirX, 0, dirZ);
-    // Each foot is on the floor for JOG_STANCE of the cycle (a short flight phase in between):
-    // it touches down ahead of the hips and leaves behind them, travelling 2*JOG_STANCE*stepLen
-    // relative to the body, which is exactly what the body covers meanwhile, so it stays planted.
-    // The feet can only reach so far ahead/behind the hips, so a long stride shortens the stance
-    // fraction (more flight) instead of splitting the legs further.
-    const jogExc = Math.min(0.42 * stepLen, 0.45);
-    const JOG_STANCE = jogExc / stepLen;
+    // Each foot is on the floor for JOG_STANCE of the cycle: it touches down ahead of the hips and
+    // leaves behind them, travelling 2*JOG_STANCE*stepLen relative to the body, which is exactly
+    // what the body covers meanwhile, so it stays planted. The feet reach up to 0.65 m ahead of
+    // the hips (the hips drop to let the legs reach); longer strides than that mean flight.
+    // The stance lasts the fraction of the cycle in which the body covers the foot's travel, so a
+    // planted foot really stays put (30-60 %: a long stride flies, a short one has double support).
+    const JOG_STANCE = clamp(2 * Math.min(0.45 * stepLen, 0.65) / stepLen, 0.3, 0.6);
+    const jogExc = JOG_STANCE * stepLen / 2;
+    if (planNew) {
+      // The leading foot stays planted for a full stance and the trailing foot swings a full stride.
+      const front = this.feet[0].pos.dot(moveDir) >= this.feet[1].pos.dot(moveDir) ? 0 : 1;
+      this.jogPhase = front === 0 ? 0 : 0.5;
+    } else if (jogW > 0.01) {
+      this.jogPhase = (this.jogPhase + cadence * dt) % 1;
+    }
     const jogLift = 0.09 + 0.07 * clamp(speed / 4, 0, 1);
     let jogDip = 0;
     for (let i = 0; i < 2; i++) {
@@ -468,12 +503,12 @@ export class PlayerModel {
       let along, y = 0;
       if (phi < JOG_STANCE) {
         const u = phi / JOG_STANCE;
-        along = 2 * JOG_STANCE * stepLen * (0.5 - u);
+        along = jogExc * (1 - 2 * u);
         jogDip = Math.max(jogDip, Math.sin(Math.PI * u));
       } else {
         // Swing: heel comes up behind the body first, then the knee drives the foot forward.
         const u = (phi - JOG_STANCE) / (1 - JOG_STANCE);
-        along = 2 * JOG_STANCE * stepLen * (-0.5 + smooth(u));
+        along = jogExc * (-1 + 2 * smooth(u));
         y = jogLift * Math.sin(Math.PI * Math.pow(u, 0.85));
         ft.jogSwing = u;
       }

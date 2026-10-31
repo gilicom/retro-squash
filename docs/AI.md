@@ -27,7 +27,11 @@ Every frame (`AIController.update`):
      m) that the player can reach in time, the volley is taken instead: the
      receiver attacks a serve rather than digging it out of the back.
    - As a fallback, the volley point if the ball never offers a bounce.
-3. The target is **beside** the ball, not on it: 0.95 m to the right of a ball
+3. The run is **paced by the time available**: the speed cap is the speed
+   that reaches the target 0.25 s early with 30 % in hand, never below 70 %
+   of top speed, so an early ball is met at a brisk stride instead of a sprint
+   that ends in a shuffle (and costs less stamina).
+4. The target is **beside** the ball, not on it: 0.95 m to the right of a ball
    on the left half of the court (played as a backhand) and to the left of a
    ball on the right half (forehand), 0.15 m behind it, so contact is out in
    front on the natural side. Reach is 25 % longer on that side and 15 %

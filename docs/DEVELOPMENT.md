@@ -17,6 +17,7 @@
 | `npm run simulate` | Shot/serve landing tables (`tools/simulate.js`). |
 | `node tools/play-match.js [difficulty] [n]` | Headless bot-vs-AI matches with statistics. |
 | `node tools/rally-trace.mjs [difficulty]` | Headless rally traces: event sequences with player positions, endings, serve returns off the back wall. |
+| `node tools/stride-check.mjs` | Footfalls per run from the T to each corner and back, through the animation solver (expect 2-4). |
 | `node tools/make-icons.js` | Regenerates `public/icons/*.png` (PWA icons) from the favicon design; no image library needed. |
 | `npm run deploy` | Builds and force-pushes `dist/` to the `gh-pages` branch (`tools/deploy-pages.js`). |
 

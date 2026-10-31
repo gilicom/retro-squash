@@ -12,6 +12,7 @@
  *   run    0..1 running intensity (default 0)
  *   model  1 = show the rigged glTF character driven by the same solver
  *   kit    you (default) or cpu: which kit colours the character wears
+ *   pz     court z of the player (default 0); 9 shows the back-corner turn
  *   split  seconds after the opponent starts a swing (split step: 0.05 load, 0.17 airborne, 0.33 landing)
  *   push   seconds after this player's follow-through begins (push-off hop: 0.09 airborne)
  *   file   character file in public/models (default Xbot.glb)
@@ -68,7 +69,7 @@ const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
 function params() {
   const q = new URLSearchParams(location.search);
   const n = (k, d) => (q.has(k) ? Number(q.get(k)) : d);
-  return { side: n('side', 1), phase: q.has('phase') ? n('phase', 0) : null, prep: n('prep', 0), ballY: n('ballY', 0.3), cam: n('cam', 35), lunge: q.has('lunge') ? n('lunge', 0) : null, run: n('run', 0), turn: n('turn', 1), frames: n('frames', 90), split: q.has('split') ? n('split', 0) : null, push: q.has('push') ? n('push', 0) : null };
+  return { side: n('side', 1), phase: q.has('phase') ? n('phase', 0) : null, prep: n('prep', 0), ballY: n('ballY', 0.3), cam: n('cam', 35), lunge: q.has('lunge') ? n('lunge', 0) : null, run: n('run', 0), turn: n('turn', 1), frames: n('frames', 90), pz: n('pz', 0), split: q.has('split') ? n('split', 0) : null, push: q.has('push') ? n('push', 0) : null };
 }
 
 /** Fake simulation state matching what PlayerModel reads from a Player. */
@@ -87,11 +88,11 @@ window.render = async function render(o = {}) {
   const a = THREE.MathUtils.degToRad(p.cam);
   camera.fov = 30;
   camera.updateProjectionMatrix();
-  camera.position.set(CX + Math.sin(a) * 4.6, 1.3, -Math.cos(a) * 4.6);
-  camera.lookAt(CX, 0.8, 0);
+  camera.position.set(CX + Math.sin(a) * 4.6, 1.3, p.pz - Math.cos(a) * 4.6);
+  camera.lookAt(CX, 0.8, p.pz);
 
-  const player = fakePlayer({ x: CX, targetX: CX, swing: p.phase === null ? 0 : 1 - p.phase, swingSide: p.side, vz: -p.run * 3, targetZ: -1 });
-  const ball = { x: CX + p.side * 0.9, y: p.ballY, z: -0.5, inPlay: true };
+  const player = fakePlayer({ x: CX, z: p.pz, targetX: CX, swing: p.phase === null ? 0 : 1 - p.phase, swingSide: p.side, vz: -p.run * 3, targetZ: p.pz - 1 });
+  const ball = { x: CX + p.side * 0.9, y: p.ballY, z: p.pz - 0.5, inPlay: true };
   ballMesh.position.set(ball.x, ball.y, ball.z);
   // Settle the smoothed parameters by stepping a few frames with the same state.
   model.prep = p.phase === null ? p.prep : 0;

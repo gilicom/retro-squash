@@ -6,6 +6,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed (strides and the back corner, 2026-10-31)
+- Runs are planned in strides: from the T any corner is reached in 2-4
+  footfalls, the last one the lunge (footfall length from the distance to the
+  target, no shuffle steps during the run, the stroke stance taken on
+  arrival, no fidgeting once settled). The jog's stance fraction now matches
+  the body's travel, so planted feet no longer slip backwards.
+- A ball in a back corner is dug out facing the corner: the body turns
+  further toward the back wall for the preparation, and the hips are kept
+  0.5 m off the back wall (0.45 m off the side walls), so the body never
+  backs through the glass.
+- The computer paces its run to the ball by the time available (never below
+  70 % of top speed) instead of sprinting to every ball and shuffling.
+- Pose viewer: `pz` places the player at a court depth (9 for the back
+  corner); `node tools/stride-check.mjs` counts footfalls per run.
+
+
 ### Changed (grip and tactics, 2026-10-31)
 - Grip reposed after the coaching sources on the "shake hands" grip: the
   index finger is spread up the handle as a trigger finger, the thumb comes
