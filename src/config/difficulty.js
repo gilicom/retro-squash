@@ -31,12 +31,12 @@ export const HUMAN = Object.freeze({
 export const STAMINA = Object.freeze({
   /** Stamina lost per metre run at full effort. ~35 m of sprinting empties the bar. */
   drainPerMetre: 0.028,
-  /** Recovery per second while moving slowly or standing. */
-  recoverIdle: 0.04,
+  /** Recovery per second while moving slowly or standing (a full bar takes about a minute). */
+  recoverIdle: 0.018,
   /** Recovery per second while standing on the T (within tRadius). */
-  recoverOnT: 0.09,
-  /** Recovery per second between rallies. */
-  recoverBetweenPoints: 0.18,
+  recoverOnT: 0.04,
+  /** Recovery per second between rallies (a few seconds buy back only part of a hard rally). */
+  recoverBetweenPoints: 0.07,
   /** Radius around the T that counts as "on the T" (m). */
   tRadius: 0.9,
   /** Speed multiplier when the bar is empty (fresh = 1). */

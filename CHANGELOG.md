@@ -23,8 +23,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed (stamina and tactics, 2026-10-31)
 - Stamina drains almost twice as fast (about 35 m of sprinting empties it)
-  and refills a little slower; serves scatter less with fatigue than other
-  shots.
+  and refills much slower (0.018/s idle, 0.04/s on the T, 0.07/s between
+  points: a full bar takes about a minute of rest); serves scatter less with
+  fatigue than other shots.
 - The computer picks shots by the opponent's position: drops and attacking
   boasts when the opponent is deep behind the T, lobs and hard drives when
   they are forward, tight straight drives otherwise; it attacks a tired
