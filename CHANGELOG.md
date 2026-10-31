@@ -21,6 +21,13 @@ All notable changes to this project are documented here. The format follows
   orientations are read from the file. Procedural bodies remain the fallback. Pose viewer
   `model=1` shows the rigged character.
 
+### Changed (movement, 2026-10-31)
+- Light jog: above a shuffle the feet follow a jog cycle (short quick strides
+  along the direction of travel, half a cycle planted and half swinging with a
+  knee lift and toes down, hips dipping at mid-stance), blended in by speed;
+  stationary adjustments, lunges and stroke stances stay with the step system.
+- Narrower lunge stance so the legs no longer split unnaturally wide.
+
 ### Changed (pose review, 2026-10-27)
 - The swing starts SWING_LEAD (0.12 s) before the ball comes within reach,
   predicted along the ball's velocity, and a swing already under way is kept

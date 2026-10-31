@@ -143,6 +143,15 @@ heel raised in a stroke stance. The hips drop when the feet are far apart so
 the legs can reach, which is what makes a lunge low. A teleport (new rally)
 resets the feet under the body.
 
+**Jog** (`player3d.js`, jog cycle): once the player moves faster than a
+shuffle (speed above about 0.7 m/s) the feet leave the step system for a
+light jog: step length 0.4-0.9 m growing with speed, cadence = speed / step
+length, each foot planted for half a cycle (static on the floor while the
+body passes over it) and swinging forward for the other half with a lift of
+5-8.5 cm and toes down, the hips dipping 2.5 cm at mid-stance. The blend
+weight ramps with speed and is removed by lunges and strokes, and the step
+system is kept primed under the jog so stopping lands cleanly.
+
 **Body orientation**: the body follows the ball. When it is the player's
 ball the hips turn 90° to the stroke's side wall as soon as they start
 moving to it (the turn is reduced by only 30 % at full run); between shots

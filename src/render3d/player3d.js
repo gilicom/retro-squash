@@ -160,13 +160,16 @@ export class PlayerModel {
     // Footstep state per leg (world space, on the floor).
     this.feet = this.legs.map(() => ({
       planted: new THREE.Vector3(NaN, 0, NaN), from: new THREE.Vector3(), to: new THREE.Vector3(),
-      swing: -1, duration: 0.25, lift: 0.06, pos: new THREE.Vector3(),
+      swing: -1, duration: 0.25, lift: 0.06, jogSwing: -1, pos: new THREE.Vector3(),
     }));
     this.prevRoot = new THREE.Vector3(NaN, 0, NaN);
 
     this._q = new THREE.Quaternion();
     this._q2 = new THREE.Quaternion();
     this._wr = new THREE.Vector3();
+    this._move = new THREE.Vector3();
+    this._jog = new THREE.Vector3();
+    this.jogPhase = 0;
     this._m = new THREE.Matrix4();
     this._x = new THREE.Vector3();
     this._y = new THREE.Vector3();
@@ -368,8 +371,8 @@ export class PlayerModel {
         // Lunge direction (world) expressed in body space.
         const lxB = this.lungeX * Math.cos(this.facing) - this.lungeZ * Math.sin(this.facing);
         const lzB = -(this.lungeX * Math.sin(this.facing) + this.lungeZ * Math.cos(this.facing));
-        if (front) { lateral += lxB * 0.55 * lunge; ahead = lerp(ahead, lzB * 0.65, lunge); }
-        else { lateral -= lxB * 0.1 * lunge; ahead = lerp(ahead, -lzB * 0.25 - 0.1, lunge); }
+        if (front) { lateral += lxB * 0.42 * lunge; ahead = lerp(ahead, lzB * 0.52, lunge); }
+        else { lateral -= lxB * 0.08 * lunge; ahead = lerp(ahead, -lzB * 0.2 - 0.08, lunge); }
       }
       const rest = this._rest[i].copy(r.position).addScaledVector(rightW, lateral).addScaledVector(fwdW, ahead);
       rest.x += p.vx * stepLead; rest.z += p.vz * stepLead;
@@ -406,8 +409,43 @@ export class PlayerModel {
         ft.pos.y = 0;
       }
     }
+    // ------------------------------------------------ jog cycle
+    // Moving faster than a shuffle the feet follow a light jog instead of the step system: short
+    // quick strides along the direction of travel, each foot planted for half a cycle and swinging
+    // forward with a knee lift for the other half, the hips dipping at mid-stance. Blended in by
+    // speed; lunges and stroke stances stay with the step system, which is kept primed underneath.
+    const jogW = smooth(clamp((speed - 0.7) / 0.7, 0, 1)) * (1 - clamp(lunge * 1.5, 0, 1)) * (inStroke ? 0 : 1);
+    const stepLen = clamp(0.35 + 0.16 * speed, 0.4, 0.9);
+    const cadence = speed / stepLen;
+    if (jogW > 0.01) this.jogPhase = (this.jogPhase + cadence * dt) % 1;
+    const moveDir = this._move.set(dirX, 0, dirZ);
+    const jogLift = 0.05 + 0.035 * clamp(speed / 4, 0, 1);
+    let jogDip = 0;
+    for (let i = 0; i < 2; i++) {
+      const ft = this.feet[i];
+      ft.jogSwing = -1;
+      if (jogW <= 0.01) continue;
+      const phi = (this.jogPhase + (i === 0 ? 0 : 0.5)) % 1;
+      let along, y = 0;
+      if (phi < 0.5) {
+        along = stepLen * (0.25 - phi);
+        jogDip = Math.max(jogDip, Math.sin(2 * Math.PI * phi));
+      } else {
+        const u = (phi - 0.5) / 0.5;
+        along = stepLen * (-0.25 + 0.5 * smooth(u));
+        y = jogLift * Math.sin(Math.PI * u);
+        ft.jogSwing = u;
+      }
+      const jog = this._jog.copy(r.position).addScaledVector(rightW, this.legs[i].side * (STANCE_HALF * 0.75 + 0.02)).addScaledVector(moveDir, along);
+      ft.pos.x = lerp(ft.pos.x, jog.x, jogW);
+      ft.pos.z = lerp(ft.pos.z, jog.z, jogW);
+      ft.pos.y = lerp(ft.pos.y, y, jogW);
+      // Keep the step system primed where the jog leaves the foot.
+      if (jogW > 0.5) { ft.swing = -1; ft.planted.set(jog.x, 0, jog.z); }
+    }
+    jogDip *= 0.025 * jogW;
     const swingMax = Math.max(this.feet[0].swing, this.feet[1].swing);
-    const stepBob = swingMax >= 0 ? Math.sin(Math.PI * swingMax) * 0.012 * (0.5 + run) : 0;
+    const stepBob = (swingMax >= 0 ? Math.sin(Math.PI * swingMax) * 0.012 * (0.5 + run) : 0) * (1 - jogW);
 
     // ------------------------------------------------ body height and torso
     const waiting = ball.inPlay && swingT < 0 && run < 0.15;
@@ -417,7 +455,7 @@ export class PlayerModel {
     // Lower the hips when the feet are far apart so the legs can reach (lunge).
     const spread = Math.hypot(this.feet[0].pos.x - this.feet[1].pos.x, this.feet[0].pos.z - this.feet[1].pos.z);
     const spreadDrop = clamp((spread - 0.5) * 0.35, 0, 0.22);
-    this.hips.position.y = this.dims.hipsY - stanceDrop - run * 0.04 - pose.drop - kneeDrop - spreadDrop - lowBall * 0.05 + stepBob + breathe + hop - landed * 0.03;
+    this.hips.position.y = this.dims.hipsY - stanceDrop - run * 0.04 - pose.drop - kneeDrop - spreadDrop - lowBall * 0.05 + stepBob + breathe + hop - landed * 0.03 - jogDip;
 
     this.torso.rotation.set(0, 0, 0);
     this.torso.rotation.y = pose.shoulders;
@@ -454,6 +492,7 @@ export class PlayerModel {
       // Toes down while the foot swings; back heel up in a stroke stance.
       const frontFoot = leg.side === -strokeSide;
       let toe = ft.swing >= 0 ? 0.35 * Math.sin(Math.PI * ft.swing) : 0;
+      if (ft.jogSwing >= 0) toe += 0.45 * Math.sin(Math.PI * ft.jogSwing) * jogW;
       if (!frontFoot && (pose.step > 0.3 || lunge > 0.3)) toe += 0.45 * Math.max(pose.step, lunge);
       // The foot pivots about the ankle, so a lifted heel raises the ankle by the toe lever; the toes stay on the floor.
       const footLocal = this._w.set(localX, ft.pos.y + this.dims.ankle + this.dims.toeLen * Math.sin(toe), localZ);
