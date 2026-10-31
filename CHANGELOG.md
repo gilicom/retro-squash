@@ -22,8 +22,9 @@ All notable changes to this project are documented here. The format follows
   `model=1` shows the rigged character.
 
 ### Changed (movement, 2026-10-31)
-- Recovery to the T is a slower jog (2.3 m/s, urgent recoveries capped at
-  85% of top speed) while the run to the ball stays at full speed.
+- Recovery to the T is a resting jog (1.7 m/s, urgent recoveries capped at
+  75% of top speed) while the run to the ball stays at full speed; stamina
+  recovers while jogging (effort below 45% of top speed no longer drains).
 - Jog stride reworked: each foot on the floor for 42% of the cycle with a
   short flight phase, touchdown ahead of the hips and toe-off behind them,
   heel lift of 9-16 cm with the knee driving forward, hips lowest at

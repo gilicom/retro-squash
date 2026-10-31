@@ -48,7 +48,7 @@ export const STAMINA = Object.freeze({
  * rather than sprint, which keeps the movement relaxed and saves stamina;
  * they sprint only for the ball.
  */
-export const RECOVERY_SPEED = 2.3;
+export const RECOVERY_SPEED = 1.7;
 
 /** Game pace presets: multiplier applied to simulation time. */
 export const PACE = Object.freeze({

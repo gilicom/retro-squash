@@ -41,7 +41,7 @@ export function recoverySpeed(player, ball, opponent, jog) {
   const timeAvailable = Math.max(0.25, path / Math.max(1, ball.groundSpeed * 0.8)) + 0.1;
   const needed = (player.distanceFromT / timeAvailable) * 1.2;
   // Even an urgent recovery stays below the sprint to the ball.
-  return Math.min(Math.max(jog, needed), player.effectiveSpeed * 0.85);
+  return Math.min(Math.max(jog, needed), player.effectiveSpeed * 0.75);
 }
 
 export class Player {
@@ -146,7 +146,7 @@ export class Player {
     const effort = Math.min(1, speedNow / Math.max(0.1, this.speed));
     if (opts.resting) {
       this.stamina += STAMINA.recoverBetweenPoints * this.fitness * dt;
-    } else if (effort > 0.35) {
+    } else if (effort > 0.45) {
       this.stamina -= STAMINA.drainPerMetre * effort * effort * moved;
     } else {
       const onT = this.distanceFromT < STAMINA.tRadius;
