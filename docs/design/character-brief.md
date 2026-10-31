@@ -13,19 +13,24 @@ sheet (`player-concept.svg`) is superseded by it where they differ.
 - Expressions available for close-ups: focused (default), competitive,
   intense (shouting), confident, smile.
 
-## Kit (player A)
+## Kit
 
-| Item | Spec |
-| --- | --- |
-| Shirt | Fitted short-sleeve athletic tee, black, with lime-yellow seam piping on the shoulders/sides and a small lime logo on the chest. Slightly heathered/worn texture. |
-| Shorts | Black, above the knee, lime side stripe and small logo. |
-| Headband | Black with a lime logo, worn low on the forehead. |
-| Wristbands | None (removed at the owner's request, 2026-10-27). |
-| Socks | White crew socks. |
-| Shoes | Black court shoes with lime accents and a lime/white sole. |
+The pieces are separate garments in their own colours, as on the PSA tour
+(a coloured shirt, dark shorts, shoes in their own colour), not a matching
+suit. The textures are painted as black cloth with lime accents and every
+piece is recoloured at load time (`KITS` in skinned-player.js).
 
-**Player B** uses the same body and kit with the accent colour swapped (orange
-or cyan) and a different face/hair, so the two are told apart at a glance.
+| Item | Player A (you) | Player B (computer) |
+| --- | --- | --- |
+| Shirt | Fitted short-sleeve athletic tee, lime, black seam piping on the shoulders/sides and a small black logo on the chest. Slightly heathered texture. | Orange, white piping and logo. |
+| Shorts | Navy, above the knee, lime side stripe and small logo. | Black, white side stripe. |
+| Headband | Black, worn low on the forehead. | Same. |
+| Wristbands | None (removed at the owner's request, 2026-10-27). | None. |
+| Socks | White crew socks. | Same. |
+| Shoes | White court shoes with a navy swoosh and heel tab, grey toe guard, lime outsole. | Blue court shoes with white trim and a white outsole. |
+
+**Player B** uses the same body with a different face/hair (to do), so the
+two are told apart at a glance by the kit and the hair.
 
 ## Equipment
 
@@ -37,9 +42,12 @@ or cyan) and a different face/hair, so the two are told apart at a glance.
 
 | Role | Colour |
 | --- | --- |
-| Kit base | #15161a (near black) |
-| Accent A (lime) | #c6ff2e |
-| Accent B (alternative) | #ff8a3d orange or #3fd0ff cyan |
+| Kit cloth (black) | #17181c |
+| Team A (lime) | #c6ff2e |
+| Team B (orange) | #ff8a3d |
+| Navy (A shorts, A shoe accent) | #18223d |
+| White (B accents, A shoes) | #f2f2ee / #e6e6e1 |
+| Blue (B shoes) | #2d5ea6 |
 | Skin | #d9a27a, with warmer tones on the face |
 | Hair | #3b2a1e |
 | Socks | #f4f4f2 |

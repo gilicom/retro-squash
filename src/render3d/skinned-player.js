@@ -50,13 +50,34 @@ const GRIP_BUTT = { lat: -0.0584, fwd: 0.0682, out: 0.031 };
 const kitMapCache = new Map();
 
 /**
- * The kit textures are painted black with lime accents; swap the lime for the team colour
- * (keeping the texture's shading) so the two players can be told apart.
- * @param {THREE.Texture} map
- * @param {THREE.Color} tint linear team colour
+ * Kit colours (hex). Like a real player's kit, the shirt, the shorts and the shoes are separate
+ * pieces in their own colours: a coloured shirt, dark shorts, shoes in their own colour. The shirt
+ * carries the team colour (lime for you, orange for the computer) so the players stay telling apart.
+ * `base` is the cloth, `accent` the piping, stripes and swooshes, `sole` the outsole.
+ * @typedef {{shirt:number, shirtAccent:number, shorts:number, shortsAccent:number, shoes:number, shoesAccent:number, sole:number}} Kit
  */
-function recolourKitMap(map, tint) {
-  const key = `${map.uuid}:${tint.getHex()}`;
+export const KITS = Object.freeze({
+  /** Lime shirt with black piping, navy shorts, white shoes with a navy swoosh and a lime sole. */
+  you: { shirt: 0xc6ff2e, shirtAccent: 0x17181c, shorts: 0x18223d, shortsAccent: 0xc6ff2e, shoes: 0xe6e6e1, shoesAccent: 0x18223d, sole: 0xc6ff2e },
+  /** Orange shirt with white piping, black shorts, blue shoes with white trim and a white sole. */
+  cpu: { shirt: 0xff8a3d, shirtAccent: 0xf2f2ee, shorts: 0x17181c, shortsAccent: 0xf2f2ee, shoes: 0x2d5ea6, shoesAccent: 0xf2f2ee, sole: 0xf2f2ee },
+});
+
+/** The kit as it was before kits existed: black cloth with the team colour as the accent. */
+function plainKit(color) {
+  return { shirt: 0x17181c, shirtAccent: color, shorts: 0x17181c, shortsAccent: color, shoes: 0x17181c, shoesAccent: color, sole: color };
+}
+
+/**
+ * The kit textures are painted black cloth with lime accents (grey and white details on the
+ * shoes); swap the black for the piece's base colour and the lime for its accent colour, keeping
+ * the texture's heather shading.
+ * @param {THREE.Texture} map
+ * @param {THREE.Color} base linear cloth colour
+ * @param {THREE.Color} accent linear accent colour
+ */
+function recolourKitMap(map, base, accent) {
+  const key = `${map.uuid}:${base.getHex()}:${accent.getHex()}`;
   if (kitMapCache.has(key)) return kitMapCache.get(key);
   const img = map.image;
   if (!img || !img.width || typeof document === 'undefined') return map;
@@ -66,16 +87,28 @@ function recolourKitMap(map, tint) {
   ctx.drawImage(img, 0, 0);
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const px = data.data;
-  const t = tint.clone().convertLinearToSRGB();
+  const t = accent.clone().convertLinearToSRGB();
   const tr = t.r * 255, tg = t.g * 255, tb = t.b * 255;
+  const c = base.clone().convertLinearToSRGB();
+  const cr = c.r * 255, cg = c.g * 255, cb = c.b * 255;
+  // The black cloth is ~36/255 in sRGB with its heather; anything darker than ~60 is cloth.
   for (let i = 0; i < px.length; i += 4) {
     const r = px[i], g = px[i + 1], b = px[i + 2];
     const m = Math.min(1, Math.max(0, (g - Math.max(r, b)) / 60));
-    if (m <= 0) continue;
-    const shade = g / 255;
-    px[i] = r + (tr * shade - r) * m;
-    px[i + 1] = g + (tg * shade - g) * m;
-    px[i + 2] = b + (tb * shade - b) * m;
+    if (m > 0) {
+      const shade = g / 255;
+      px[i] = r + (tr * shade - r) * m;
+      px[i + 1] = g + (tg * shade - g) * m;
+      px[i + 2] = b + (tb * shade - b) * m;
+      continue;
+    }
+    const lum = (r + g + b) / 3;
+    const d = Math.min(1, Math.max(0, (60 - lum) / 20));
+    if (d <= 0) continue;
+    const shade = Math.min(1.2, Math.max(0.8, lum / 36));
+    px[i] = r + (cr * shade - r) * d;
+    px[i + 1] = g + (cg * shade - g) * d;
+    px[i + 2] = b + (cb * shade - b) * d;
   }
   ctx.putImageData(data, 0, 0);
   const tex = new THREE.CanvasTexture(canvas);
@@ -111,8 +144,8 @@ function frameYX(y, xHint, out, m = new THREE.Matrix4(), tx = new THREE.Vector3(
 export class SkinnedPlayer {
   /**
    * @param {import('three/examples/jsm/loaders/GLTFLoader.js').GLTF} gltf loaded character
-   * @param {number} color team colour (tints the character and the racket)
-   * @param {{number?:number}} [look]
+   * @param {number} color team colour (tints an undressed mannequin; the default kit's accent)
+   * @param {{number?:number, hair?:number, kit?:Kit}} [look] kit: see {@link KITS}
    */
   constructor(gltf, color, look = {}) {
     this.root = cloneSkeleton(gltf.scene);
@@ -194,6 +227,8 @@ export class SkinnedPlayer {
     // hair and eyes and only swaps the kit's accent (lime in the Blender build)
     // for the team colour; an untextured mannequin is tinted as a whole.
     const tint = new THREE.Color(color);
+    const kit = look.kit || plainKit(color);
+    const kitColor = (hex) => new THREE.Color(hex);
     const dressed = (() => { let d = false; this.root.traverse((o) => { if (o.isMesh && o.geometry.attributes.color) d = true; }); return d; })();
     this.root.traverse((o) => {
       if (!o.isMesh) return;
@@ -205,7 +240,10 @@ export class SkinnedPlayer {
         const c = m.clone();
         if (!dressed) c.color.copy(tint).lerp(new THREE.Color(0xffffff), m.map ? 0.72 : 0.35);
         else if (/hair/i.test(m.name) && look.hair !== undefined) c.color.set(look.hair);
-        else if (m.map && /kit/i.test(m.name)) c.map = recolourKitMap(m.map, tint);
+        else if (m.map && /shirt/i.test(m.name)) c.map = recolourKitMap(m.map, kitColor(kit.shirt), kitColor(kit.shirtAccent));
+        else if (m.map && /shorts/i.test(m.name)) c.map = recolourKitMap(m.map, kitColor(kit.shorts), kitColor(kit.shortsAccent));
+        else if (m.map && /shoe/i.test(m.name)) c.map = recolourKitMap(m.map, kitColor(kit.shoes), kitColor(kit.shoesAccent));
+        else if (m.map && /kit/i.test(m.name)) c.map = recolourKitMap(m.map, kitColor(0x17181c), tint);
         return c;
       });
       o.material = Array.isArray(o.material) ? cloned : cloned[0];
@@ -214,13 +252,13 @@ export class SkinnedPlayer {
         // Own copy of the geometry so the two players can differ, then recolour the accent.
         o.geometry = o.geometry.clone();
         const attr = o.geometry.attributes.color;
-        const lime = new THREE.Color(0.55, 1.0, 0.08);
+        // Lime vertex colours are the outsoles.
+        const sole = kitColor(kit.sole);
         for (let i = 0; i < attr.count; i++) {
           const r = attr.getX(i), g = attr.getY(i), bl = attr.getZ(i);
-          if (g > 0.6 && r < 0.9 && bl < 0.35 && g > r) { attr.setXYZ(i, tint.r, tint.g, tint.b); }
+          if (g > 0.6 && r < 0.9 && bl < 0.35 && g > r) { attr.setXYZ(i, sole.r, sole.g, sole.b); }
         }
         attr.needsUpdate = true;
-        void lime;
       }
     });
 

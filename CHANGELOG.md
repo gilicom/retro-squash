@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed (kit colours, 2026-10-31)
+- The kit is no longer a matching suit: shirt, shorts and shoes are
+  recoloured as separate pieces, like a real player's kit. You: lime shirt
+  with black piping, navy shorts with a lime stripe, white shoes with a navy
+  swoosh and a lime sole. Computer: orange shirt with white piping, black
+  shorts, blue shoes with white trim and a white sole (`KITS` in
+  skinned-player.js; the pose viewer takes `kit=cpu`).
+
+
 ### Changed (split step and ready stance, 2026-10-31)
 - Ready stance on the T is a real squat: both feet toward the front wall, a
   little wider than the hips, knees well bent; while waiting for the

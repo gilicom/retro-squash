@@ -209,9 +209,16 @@ through the MCP connection from `docs/design/character-brief.md`:
   Hair is a solidified cap of scalp faces; eyes are MakeHuman's eye helper
   spheres with small iris spheres; headband and wristbands are tori weighted
   to the head and hand bones.
-- Team colour: the renderer recolours the lime vertices (hue test) to the
-  team colour per player and sets the hair colour, leaving skin and eyes
-  alone. The Xbot mannequin is the fallback and is tinted as a whole.
+- Kit colours: the textures are painted as black cloth with lime accents
+  (grey and white details on the shoes), and at load time the renderer
+  recolours each piece on its own, like a real player's kit bought piece by
+  piece (`KITS` in skinned-player.js: cloth, accent and outsole per piece).
+  You: lime shirt with black piping, navy shorts with a lime stripe, white
+  shoes with a navy swoosh and a lime sole. Computer: orange shirt with white
+  piping, black shorts, blue shoes with white trim and a white sole. The
+  shirt carries the team colour so the players stay telling apart; the hair
+  colour is set per player; skin and eyes are left alone. The Xbot mannequin
+  is the fallback and is tinted as a whole.
 
 The Blender scene is kept in `tools/blender/squash-assets.blend`
 (git-ignored, large) for further work. Any other Mixamo-rig character can

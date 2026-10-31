@@ -13,7 +13,7 @@ import { COURT } from '../config/court.js';
 import { T_POSITION } from '../entities/player.js';
 import { buildCourt } from './court3d.js';
 import { PlayerModel } from './player3d.js';
-import { SkinnedPlayer, loadCharacter } from './skinned-player.js';
+import { SkinnedPlayer, loadCharacter, KITS } from './skinned-player.js';
 import { loadRacketModel } from './racket-model.js';
 
 /** Rigged character used for the players (Mixamo rig), built in Blender from docs/design/character-brief.md. */
@@ -58,7 +58,7 @@ export class Renderer3D {
     for (const m of this.models) this.scene.add(m.root);
     this.characterReady = false;
     Promise.all([loadRacketModel(RACKET_URL), loadCharacter(CHARACTER_URL).catch(() => loadCharacter(FALLBACK_CHARACTER_URL))]).then(([, gltf]) => {
-      const looks = [{ number: 7, hair: 0x3b2a1e }, { number: 3, hair: 0x120d0a }];
+      const looks = [{ number: 7, hair: 0x3b2a1e, kit: KITS.you }, { number: 3, hair: 0x120d0a, kit: KITS.cpu }];
       const colors = [0xc6ff2e, 0xff8a3d];
       const skinned = colors.map((c, i) => new SkinnedPlayer(gltf, c, looks[i]));
       for (const m of this.models) this.scene.remove(m.root);

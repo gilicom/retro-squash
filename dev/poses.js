@@ -11,6 +11,7 @@
  *   lunge  0..1 force a lunge (default: from the pose)
  *   run    0..1 running intensity (default 0)
  *   model  1 = show the rigged glTF character driven by the same solver
+ *   kit    you (default) or cpu: which kit colours the character wears
  *   split  seconds after the opponent starts a swing (split step: 0.05 load, 0.17 airborne, 0.33 landing)
  *   push   seconds after this player's follow-through begins (push-off hop: 0.09 airborne)
  *   file   character file in public/models (default Xbot.glb)
@@ -21,7 +22,7 @@
  */
 import * as THREE from 'three';
 import { PlayerModel } from '../src/render3d/player3d.js';
-import { SkinnedPlayer, loadCharacter } from '../src/render3d/skinned-player.js';
+import { SkinnedPlayer, loadCharacter, KITS } from '../src/render3d/skinned-player.js';
 import { loadRacketModel } from '../src/render3d/racket-model.js';
 import { COURT } from '../src/config/court.js';
 
@@ -57,7 +58,7 @@ scene.add(model.root);
 const qs = new URLSearchParams(location.search);
 const useModel = qs.get('model') === '1';
 const ready = loadRacketModel('/models/racket.glb').then(() => useModel
-  ? loadCharacter('/models/' + (qs.get('file') || 'player.glb')).then((gltf) => { scene.remove(model.root); model = new SkinnedPlayer(gltf, parseInt(qs.get('color') || 'c6ff2e', 16), { hair: 0x3b2a1e }); scene.add(model.root); })
+  ? loadCharacter('/models/' + (qs.get('file') || 'player.glb')).then((gltf) => { scene.remove(model.root); model = new SkinnedPlayer(gltf, parseInt(qs.get('color') || 'c6ff2e', 16), { hair: 0x3b2a1e, kit: KITS[qs.get('kit') || 'you'] }); scene.add(model.root); })
   : (scene.remove(model.root), model = new PlayerModel(0xc6ff2e), scene.add(model.root)));
 const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffffff }));
 scene.add(ballMesh);
