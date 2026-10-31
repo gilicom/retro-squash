@@ -22,6 +22,9 @@ All notable changes to this project are documented here. The format follows
   `model=1` shows the rigged character.
 
 ### Changed (movement, 2026-10-31)
+- Economical footwork: strides of 0.5-1.5 m (2-4 steps from the T to any
+  corner) with a shorter stance and longer flight at speed; fewer small
+  adjustment steps.
 - Players stand further from the ball for the stroke: the computer sets up
   0.8 m beside the ball (was 0.45 m, the racket covers the rest) and the
   contact pressure model treats 0.8 m as the clean distance, with a cramped

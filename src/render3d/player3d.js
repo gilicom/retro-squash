@@ -391,7 +391,7 @@ export class PlayerModel {
         const dist = Math.hypot(ft.planted.x - rest.x, ft.planted.z - rest.z);
         const otherRest = this._rest[1 - i];
         const otherDist = Math.hypot(ot.planted.x - otherRest.x, ot.planted.z - otherRest.z);
-        const threshold = 0.14 + 0.08 * Math.min(speed, 4);
+        const threshold = 0.2 + 0.08 * Math.min(speed, 4);
         if (dist > threshold && dist >= otherDist - 0.02) {
           ft.swing = 0;
           ft.from.copy(ft.planted);
@@ -415,14 +415,18 @@ export class PlayerModel {
     // forward with a knee lift for the other half, the hips dipping at mid-stance. Blended in by
     // speed; lunges and stroke stances stay with the step system, which is kept primed underneath.
     const jogW = smooth(clamp((speed - 0.7) / 0.7, 0, 1)) * (1 - clamp(lunge * 1.5, 0, 1)) * (inStroke ? 0 : 1);
-    const stepLen = clamp(0.35 + 0.16 * speed, 0.4, 0.9);
+    // Squash footwork is economical: long strides, 2-4 steps from the T to any corner.
+    const stepLen = clamp(0.45 + 0.24 * speed, 0.5, 1.5);
     const cadence = speed / stepLen;
     if (jogW > 0.01) this.jogPhase = (this.jogPhase + cadence * dt) % 1;
     const moveDir = this._move.set(dirX, 0, dirZ);
     // Each foot is on the floor for JOG_STANCE of the cycle (a short flight phase in between):
     // it touches down ahead of the hips and leaves behind them, travelling 2*JOG_STANCE*stepLen
     // relative to the body, which is exactly what the body covers meanwhile, so it stays planted.
-    const JOG_STANCE = 0.42;
+    // The feet can only reach so far ahead/behind the hips, so a long stride shortens the stance
+    // fraction (more flight) instead of splitting the legs further.
+    const jogExc = Math.min(0.42 * stepLen, 0.45);
+    const JOG_STANCE = jogExc / stepLen;
     const jogLift = 0.09 + 0.07 * clamp(speed / 4, 0, 1);
     let jogDip = 0;
     for (let i = 0; i < 2; i++) {
